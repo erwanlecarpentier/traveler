@@ -4,10 +4,11 @@
 class map_node {
 public:
     std::string name;
-    std::vector<std::shared_ptr<map_node>> edges;
+    std::vector<map_node*> edges;
+    std::vector<std::vector<unsigned>> edges_costs;
 
-    map_node() {
-        //TODO
+    map_node(std::string _name) :name(_name) {
+        //
     }
 };
 

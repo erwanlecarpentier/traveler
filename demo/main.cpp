@@ -9,13 +9,15 @@
 
 #include <agent.hpp>
 #include <environment.hpp>
+#include <exceptions.hpp>
 #include <parameters.hpp>
 #include <utils.hpp>
 
 void run(bool print) {
     parameters p;
     environment en(p);
-    agent ag(p);
+    //agent ag(p);
+    /*
     for(unsigned t = 0; t < p.SIMULATION_LIMIT_TIME; ++t) {
         if(print) {
             std::cout << t << std::endl;
@@ -28,6 +30,7 @@ void run(bool print) {
             break;
         }
     }
+    */
 }
 
 /**
