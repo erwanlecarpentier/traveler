@@ -9,7 +9,7 @@
 #include <utils.hpp>
 
 void run() {
-    std::cout << "Hello world\n";
+    parameters p;
 }
 
 /**
