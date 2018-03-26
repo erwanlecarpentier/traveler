@@ -3,13 +3,31 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <vector>
 
+#include <agent.hpp>
+#include <environment.hpp>
+#include <parameters.hpp>
 #include <utils.hpp>
 
-void run() {
+void run(bool print) {
     parameters p;
+    environment en(p);
+    agent ag(p);
+    for(unsigned t = 0; t < p.SIMULATION_LIMIT_TIME; ++t) {
+        if(print) {
+            std::cout << t << std::endl;
+        }
+        ag.apply_policy();
+        en.transition(ag);
+        ag.process_reward();
+        ag.step();
+        if(en.is_terminal(ag)) {
+            break;
+        }
+    }
 }
 
 /**
@@ -20,7 +38,7 @@ int main() {
         std::clock_t c_start = std::clock();
         srand(time(NULL));
 
-        run();
+        run(true);
 
         std::clock_t c_end = std::clock();
         double time_elapsed_ms = 1000. * (c_end - c_start) / CLOCKS_PER_SEC;
