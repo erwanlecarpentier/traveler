@@ -6,6 +6,7 @@
 
 #include <exceptions.hpp>
 #include <policy.hpp>
+#include <mcts_policy.hpp>
 #include <random_policy.hpp>
 #include <state.hpp>
 
@@ -32,6 +33,9 @@ public:
 
     std::unique_ptr<policy> build_policy() const {
         switch(POLICY_SELECTOR) {
+            case 0: { // mcts policy
+                return std::unique_ptr<policy> (new mcts_policy());
+            }
             default: { // random policy
                 return std::unique_ptr<policy> (new random_policy());
             }
