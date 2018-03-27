@@ -13,24 +13,31 @@
 #include <parameters.hpp>
 #include <utils.hpp>
 
+void print_informations(unsigned k, agent &ag) {
+    std::cout << "step: " << k;
+    std::cout << " time: " << ag.s.t;
+    std::cout << " location: " << ag.s.node->name;
+    std::cout << " goto: " << ag.a.direction;
+    //std::cout << " goto: " << ag.s_p.node->name;
+    std::cout << " r: " << ag.r << std::endl;
+}
+
 void run(bool print) {
     parameters p;
     environment en(p);
-    //agent ag(p);
-    /*
-    for(unsigned t = 0; t < p.SIMULATION_LIMIT_TIME; ++t) {
-        if(print) {
-            std::cout << t << std::endl;
-        }
+    agent ag(p,en.get_initial_node_ptr(p.INITIAL_LOCATION));
+    unsigned k = 0;
+    for(k = 0; k < p.SIMULATION_LIMIT_TIME; ++k) {
         ag.apply_policy();
         en.transition(ag);
         ag.process_reward();
+        if(print) print_informations(k,ag);
         ag.step();
-        if(en.is_terminal(ag)) {
+        if(en.is_state_terminal(ag)) {
             break;
         }
     }
-    */
+    if(print) print_informations(k + 1,ag);
 }
 
 /**

@@ -6,8 +6,9 @@ public:
     std::string name;
     std::vector<map_node*> edges;
     std::vector<std::vector<unsigned>> edges_costs;
+    bool is_terminal;
 
-    map_node(std::string _name) :name(_name) {
+    map_node(std::string _name, bool _is_terminal) : name(_name), is_terminal(_is_terminal) {
         //
     }
 };

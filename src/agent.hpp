@@ -17,11 +17,16 @@ public:
     /**
      * @brief Constructor
      *
-     * Constructs an object given the parameters.
-     * @param {parameters &} p; used parameters
+     * Constructs an object given the initial location.
      */
-    agent(const parameters &p) {
-        s = p.INITIAL_STATE;
+    agent(const parameters &p, map_node *ptr) :
+        po(std::move(p.build_policy())),
+        s(0,ptr),
+        s_p(0,ptr),
+        a(""),
+        r(0)
+    {
+        //
     }
 
     void apply_policy() {

@@ -5,17 +5,37 @@
 #include <sstream>
 
 #include <exceptions.hpp>
+#include <policy.hpp>
+#include <random_policy.hpp>
 #include <state.hpp>
 
 class parameters {
 public:
-    unsigned SIMULATION_LIMIT_TIME = 3;
-    std::string GRAPH_DURATION_MATRIX_PATH = "data/duration_matrix.csv";
-    char CSV_SEP = ';';
-    state INITIAL_STATE;
+    unsigned SIMULATION_LIMIT_TIME;
+    unsigned POLICY_SELECTOR;
+    std::string INITIAL_LOCATION;
+    std::string TERMINAL_LOCATION;
+    std::string GRAPH_DURATION_MATRIX_PATH;
+    char CSV_SEP;
 
+    /**
+     * @brief Default constructor
+     */
     parameters() {
-        //
+        SIMULATION_LIMIT_TIME = 20;
+        POLICY_SELECTOR = 0;
+        INITIAL_LOCATION = "Shuttle";
+        TERMINAL_LOCATION = "Lava castle";
+        GRAPH_DURATION_MATRIX_PATH = "data/duration_matrix.csv";
+        CSV_SEP = ';';
+    }
+
+    std::unique_ptr<policy> build_policy() const {
+        switch(POLICY_SELECTOR) {
+            default: { // random policy
+                return std::unique_ptr<policy> (new random_policy());
+            }
+        }
     }
 
     std::vector<std::vector<std::string>> extract_duration_matrix() {
@@ -66,29 +86,41 @@ public:
         return v;
     }
 
-    void parse_map(std::vector<map_node> &v) {
+    void parse_environment(
+        std::vector<unsigned> &ts,
+        std::vector<map_node> &nv)
+    {
         std::vector<std::vector<std::string>> dm = extract_duration_matrix();
-        // 1. Create nodes
+        // 0. Extract time scale
+        unsigned tref = std::stoul(dm.at(0).at(2));
+        for(unsigned j=2; j<dm.at(0).size(); ++j) {
+            ts.push_back(std::stoul(dm.at(0).at(j)) - tref);
+        }
+        // 1. Create nodes and assign termination criterion
         for(unsigned i=1; i<dm.size(); ++i) {
             for(unsigned j=0; j<2; ++j) {
-                if(!is_node_already_created(dm.at(i).at(j),v)) {
-                    v.emplace_back(map_node(dm.at(i).at(j)));
+                if(!is_node_already_created(dm.at(i).at(j),nv)) {
+                    if(dm.at(i).at(j).compare(TERMINAL_LOCATION) == 0) {
+                        nv.emplace_back(map_node(dm.at(i).at(j),true));
+                    } else {
+                        nv.emplace_back(map_node(dm.at(i).at(j),false));
+                    }
                 }
             }
         }
         // 2. Create edges
         for(unsigned i=1; i<dm.size(); ++i) {
             unsigned orig = 0, dest = 0;
-            for(unsigned k=0; k<v.size(); ++k) {
-                if(v.at(k).name.compare(dm.at(i).at(0)) == 0) {
+            for(unsigned k=0; k<nv.size(); ++k) {
+                if(nv.at(k).name.compare(dm.at(i).at(0)) == 0) {
                     orig = k;
                 }
-                if(v.at(k).name.compare(dm.at(i).at(1)) == 0) {
+                if(nv.at(k).name.compare(dm.at(i).at(1)) == 0) {
                     dest = k;
                 }
             }
-            v.at(orig).edges.emplace_back(&v.at(dest));
-            v.at(orig).edges_costs.push_back(get_durations(i,dm));
+            nv.at(orig).edges.emplace_back(&nv.at(dest));
+            nv.at(orig).edges_costs.push_back(get_durations(i,dm));
         }
     }
 };
