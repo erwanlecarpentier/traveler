@@ -1,6 +1,7 @@
 #ifndef PARAMETERS_HPP_
 #define PARAMETERS_HPP_
 
+#include <libconfig.h++>
 #include <fstream>
 #include <sstream>
 
@@ -18,7 +19,7 @@ public:
     std::string INITIAL_LOCATION;
     std::string TERMINAL_LOCATION;
     std::string GRAPH_DURATION_MATRIX_PATH;
-    char CSV_SEP;
+    std::string CSV_SEP;
     // Policy parameters
     unsigned POLICY_SELECTOR;
     bool IS_MODEL_DYNAMIC;
@@ -30,19 +31,42 @@ public:
     /**
      * @brief Default constructor
      */
-    parameters() {
-        SIMULATION_LIMIT_TIME = 20;
-        INITIAL_LOCATION = "A";
-        TERMINAL_LOCATION = "C";
-        GRAPH_DURATION_MATRIX_PATH = "data/duration_matrix.csv";
-        CSV_SEP = ';';
+    parameters(const char *cfg_path) {
+        libconfig::Config cfg;
+        try {
+            cfg.readFile(cfg_path);
+        }
+        catch(const libconfig::ParseException &e) {
+            display_libconfig_parse_exception(e);
+        }
+        if(cfg.lookupValue("simulation_limit_time",SIMULATION_LIMIT_TIME)
+        && cfg.lookupValue("initial_location",INITIAL_LOCATION)
+        && cfg.lookupValue("terminal_location",TERMINAL_LOCATION)
+        && cfg.lookupValue("graph_duration_matrix",GRAPH_DURATION_MATRIX_PATH)
+        && cfg.lookupValue("csv_sep",CSV_SEP)
+        && cfg.lookupValue("policy_selector",POLICY_SELECTOR)
+        && cfg.lookupValue("is_model_dynamic",IS_MODEL_DYNAMIC)
+        && cfg.lookupValue("discount_factor",DISCOUNT_FACTOR)
+        && cfg.lookupValue("uct_parameter",UCT_PARAMETER)
+        && cfg.lookupValue("tree_search_budget",TREE_SEARCH_BUDGET)
+        && cfg.lookupValue("default_policy_horizon",DEFAULT_POLICY_HORIZON)) {
+            /* Nothing to do */
+        }
+        else { // Error in config file
+            throw wrong_syntax_configuration_file_exception();
+        }
+    }
 
-        POLICY_SELECTOR = 0;
-        IS_MODEL_DYNAMIC = true;
-        DISCOUNT_FACTOR = 0.9;
-        UCT_PARAMETER = 0.7;
-        TREE_SEARCH_BUDGET = 10;
-        DEFAULT_POLICY_HORIZON = 1;
+    /**
+     * @brief Display libconfig ParseException
+     *
+     * @param {const libconfig::ParseException &} e; displayed exception
+     */
+    void display_libconfig_parse_exception(const libconfig::ParseException &e) const {
+        std::cerr << "Error in parameters(const char *cfg_path): ParseException ";
+        std::cerr << "in file " << e.getFile() << " ";
+        std::cerr << "at line " << e.getLine() << ": ";
+        std::cerr << e.getError() << std::endl;
     }
 
     agent build_agent(environment &en) const {
@@ -89,7 +113,7 @@ public:
                 std::stringstream ss(line);
                 std::string cell;
 
-                while(std::getline(ss,cell,CSV_SEP)) {
+                while(std::getline(ss,cell,CSV_SEP.at(0))) {
                     result.push_back(cell);
                 }
                 if(is.eof()) {

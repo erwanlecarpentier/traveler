@@ -45,4 +45,18 @@ struct nonexistent_node_exception : std::exception {
     }
 };
 
+/**
+ * @brief Wrong syntax configuration file exception
+ *
+ * Exception for wrong syntax in configuration file.
+ */
+struct wrong_syntax_configuration_file_exception : std::exception {
+    explicit wrong_syntax_configuration_file_exception() noexcept {}
+    virtual ~wrong_syntax_configuration_file_exception() noexcept {}
+
+    virtual const char * what() const noexcept override {
+        return "in config file: please make sure that the syntaxes match.\n";
+    }
+};
+
 #endif // EXCEPTIONS_HPP_

@@ -22,8 +22,8 @@ void print_informations(unsigned k, agent &ag) {
     std::cout << " r: " << ag.r << std::endl;
 }
 
-void run(bool print) {
-    parameters p;
+void run(const char *cfg_path, bool print) {
+    parameters p(cfg_path);
     environment en = p.build_environment();
     agent ag = p.build_agent(en);
     unsigned k = 0;
@@ -47,7 +47,7 @@ int main() {
     try {
         std::clock_t c_start = std::clock();
         srand(time(NULL));
-        run(true);
+        run("config/parameters.cfg",true);
         std::clock_t c_end = std::clock();
         double time_elapsed_ms = 1000. * (c_end - c_start) / CLOCKS_PER_SEC;
         std::cout << "Program run in " << time_elapsed_ms << "ms" << std::endl;
