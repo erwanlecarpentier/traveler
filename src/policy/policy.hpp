@@ -6,7 +6,7 @@
 
 class policy {
 public:
-    virtual action apply (const state &s) const = 0;
+    virtual action apply (const state &s) = 0;
 
     virtual void process_reward(
         const state &s,

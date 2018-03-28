@@ -9,6 +9,10 @@ public:
     double t; ///< time
     map_node * nd_ptr; ///< location in the graph
 
+    state() {
+        //
+    }
+
     state(unsigned _t, map_node * _nd_ptr) : t(_t), nd_ptr(_nd_ptr) {
         //
     }
@@ -82,6 +86,10 @@ public:
         } else {
             throw no_action_exception();
         }
+    }
+
+    bool is_equal_to(const state &s) const {
+        return ((t == s.t) && (nd_ptr == s.nd_ptr));
     }
 
     void print() const {

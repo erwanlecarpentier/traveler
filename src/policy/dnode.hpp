@@ -19,10 +19,9 @@ public:
      */
     dnode(
         state _s,
-        std::vector<action> _actions,
         double _depth = 0) :
         s(_s),
-        actions(_actions),
+        actions(_s.get_action_space()),
         depth(_depth)
     {
         //

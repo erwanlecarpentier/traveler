@@ -15,12 +15,12 @@ class parameters {
 public:
     // Simulation parameters
     unsigned SIMULATION_LIMIT_TIME;
-    unsigned POLICY_SELECTOR;
     std::string INITIAL_LOCATION;
     std::string TERMINAL_LOCATION;
     std::string GRAPH_DURATION_MATRIX_PATH;
     char CSV_SEP;
     // Policy parameters
+    unsigned POLICY_SELECTOR;
     bool IS_MODEL_DYNAMIC;
     double DISCOUNT_FACTOR;
     double UCT_PARAMETER;
@@ -32,16 +32,16 @@ public:
      */
     parameters() {
         SIMULATION_LIMIT_TIME = 20;
-        POLICY_SELECTOR = 0;
         INITIAL_LOCATION = "A";
         TERMINAL_LOCATION = "C";
         GRAPH_DURATION_MATRIX_PATH = "data/duration_matrix.csv";
         CSV_SEP = ';';
 
+        POLICY_SELECTOR = 0;
         IS_MODEL_DYNAMIC = true;
         DISCOUNT_FACTOR = 0.9;
         UCT_PARAMETER = 0.7;
-        TREE_SEARCH_BUDGET = 2;
+        TREE_SEARCH_BUDGET = 10;
         DEFAULT_POLICY_HORIZON = 1;
     }
 
@@ -55,15 +55,19 @@ public:
 
     std::unique_ptr<policy> build_policy(environment &en) const {
         switch(POLICY_SELECTOR) {
-            case 0: { // mcts policy
+            case 0: { // MCTS policy
                 return std::unique_ptr<policy> (
                     new mcts_policy(
-                        &en,
-                        IS_MODEL_DYNAMIC,
-                        DISCOUNT_FACTOR,
-                        UCT_PARAMETER,
-                        TREE_SEARCH_BUDGET,
-                        DEFAULT_POLICY_HORIZON
+                        &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
+                        TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 38
+                    )
+                );
+            }
+            case 1: { // UCT policy
+                return std::unique_ptr<policy> (
+                    new mcts_policy(
+                        &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
+                        TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 0
                     )
                 );
             }

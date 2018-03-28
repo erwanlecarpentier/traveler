@@ -5,7 +5,7 @@
 
 class random_policy : public policy {
 public:
-    action apply(const state &s) const override {
+    action apply(const state &s) override {
         return rand_element(s.get_action_space());
         /*
         if(s.nd_ptr->edges.size() > 0) {
