@@ -60,7 +60,7 @@ public:
         double c_m, c_p = c.at(std::get<1>(ti_ind));
         double t_m, t_p = ts.at(std::get<1>(ti_ind));
         if(std::get<0>(ti_ind) == std::get<1>(ti_ind)) {
-            std::cout << "Warning, max range of duration matrix reached.\n";
+            //std::cout << "Warning, max range of duration matrix reached.\n";
             c_m = c.at(std::get<0>(ti_ind) - 1);
             t_m = ts.at(std::get<0>(ti_ind) - 1);
         } else {
