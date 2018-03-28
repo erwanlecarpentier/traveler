@@ -123,7 +123,8 @@ public:
     environment build_environment() const {
         std::vector<std::vector<std::string>> dm;
         if(GENERATE_MAP) {
-            dm = build_random_duration_matrix();
+            //dm = build_random_connected_directed_duration_matrix();
+            dm = build_random_connected_symmetric_directed_duration_matrix();
         } else {
             dm = extract_duration_matrix();
         }
@@ -151,7 +152,7 @@ public:
         return new_line;
     }
 
-    std::vector<std::vector<std::string>> build_random_duration_matrix() const {
+    std::vector<std::vector<std::string>> build_random_connected_directed_duration_matrix() const {
         std::vector<std::vector<std::string>> dm;
         // 0. time scale
         std::vector<std::string> first_line;
@@ -166,10 +167,9 @@ public:
         for(unsigned i=0; i<NB_NODES; ++i) {
             nodes_names.push_back("n" + std::to_string(i));
         }
-        std::vector<unsigned> nodes_edges_counter(nodes_names.size(),0);
-        // 2. Edges
+        // 2. Build minimum of edges per node
         for(unsigned i=0; i<NB_NODES; ++i) {
-            for(unsigned k=nodes_edges_counter.at(i); k<MIN_NB_EDGES_PER_NODE; ++k) {
+            for(unsigned k=0; k<MIN_NB_EDGES_PER_NODE; ++k) {
                 unsigned dest_ind = i;
                 while(dest_ind == i) {
                     dest_ind = rand_indice(nodes_names);
@@ -194,6 +194,57 @@ public:
                 dm.push_back(create_random_edge(orig_ind,i,nodes_names));
             }
         }
+        return dm;
+    }
+
+    bool does_edge_exist(
+        std::vector<std::vector<std::string>> dm,
+        std::string orig_name,
+        std::string dest_name) const
+    {
+        if(orig_name.compare(dest_name) == 0) {
+            return true;
+        } else {
+            for(unsigned i=1; i<dm.size(); ++i) {
+                if(dm.at(i).at(0).compare(orig_name) == 0) {
+                    if(dm.at(i).at(1).compare(dest_name) == 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    std::vector<std::vector<std::string>> build_random_connected_symmetric_directed_duration_matrix() const {
+        std::vector<std::vector<std::string>> dm;
+        // 0. time scale
+        std::vector<std::string> first_line;
+        first_line.push_back("start");
+        first_line.push_back("goal");
+        for(unsigned i=0; i<NB_TIME_STEPS+1; ++i) {
+            first_line.push_back(std::to_string(i * TIME_STEPS_WIDTH));
+        }
+        dm.push_back(first_line);
+        // 1. Build minimum of edges per node + the come-back edge
+        std::vector<std::string> nodes_names;
+        for(unsigned i=0; i<NB_NODES; ++i) {
+            nodes_names.push_back("n" + std::to_string(i));
+        }
+        std::vector<unsigned> nodes_edges_counter(nodes_names.size(),0);
+        // 2. Edges
+        for(unsigned i=0; i<NB_NODES; ++i) {
+            for(unsigned k=nodes_edges_counter.at(i); k<MIN_NB_EDGES_PER_NODE; ++k) {
+                unsigned dest_ind = i;
+                while(dest_ind == i || does_edge_exist(dm,nodes_names.at(i),nodes_names.at(dest_ind))) {
+                    dest_ind = rand_indice(nodes_names);
+                }
+                nodes_edges_counter.at(i)++;
+                nodes_edges_counter.at(dest_ind)++;
+                dm.push_back(create_random_edge(i,dest_ind,nodes_names));
+                dm.push_back(create_random_edge(dest_ind,i,nodes_names));
+            }
+        }
 
         //TRM
         for(auto &line : dm) {
@@ -202,6 +253,7 @@ public:
             }
             std::cout << std::endl;
         }
+        exit(0);
         //TRM
         return dm;
     }
