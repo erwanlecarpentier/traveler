@@ -24,19 +24,22 @@ public:
     /**
      * @brief Constructor
      */
-    /*
-    mcts_policy(const parameters &p) {
-        is_model_dynamic = p.IS_MODEL_DYNAMIC;
-        discount_factor = p.DISCOUNT_FACTOR;
-        uct_parameter = p.UCT_CST;
-        //terminal_state_value = 0.;
-        budget = p.TREE_SEARCH_BUDGET;
-        //nb_cnodes = 0;
-        //nb_calls = 0;
-        horizon = p.DEFAULT_POLICY_HORIZON;
-        //mcts_strategy_switch = p.MCTS_STRATEGY_SWITCH;
+    mcts_policy(
+        environment * _envt_ptr,
+        bool _is_model_dynamic,
+        double _discount_factor,
+        double _uct_parameter,
+        unsigned _budget,
+        unsigned _horizon) :
+        envt_ptr(_envt_ptr),
+        is_model_dynamic(_is_model_dynamic),
+        discount_factor(_discount_factor),
+        uct_parameter(_uct_parameter),
+        budget(_budget),
+        horizon(_horizon)
+    {
+        //
     }
-    */
 
 /*
     state generative_model(const state &s, std::shared_ptr<action> a, MD &mod) {
@@ -181,68 +184,67 @@ public:
     }
 */
 
-    /**
-     * @brief Build tree
-     *
-     * Build a tree at the input root node.
-     * @param {dnode &} root; reference to the input root node
-     */
-    /*
-    void build_tree(dnode &root) {
-        for(unsigned i=0; i<budget; ++i) {
-            MD mod = model.get_copy();
-            search_tree(&root, mod);
-        }
-        nb_cnodes = 0;
-    }
-    */
-
-    /**
-     * @brief Argmax value
-     *
-     * Get the indice of the child with the maximum value.
-     * @param {const dnode &} v; input decision node
-     * @return Return the indice of the child with the maximum value.
-     */
-    unsigned argmax_value(const dnode &v) const {
-        std::vector<double> values;
-        for(auto &c: v.children) {
-            values.emplace_back(c->get_value());
-        }
-        return argmax(values);
-    }
-
-    /**
-     * @brief Argmax visit counter
-     *
-     * Get the indice of the child with the maximum number of visits.
-     * @param {const dnode &} v; input decision node
-     * @return Return the indice of the child with the maximum number of visits.
-     */
-    unsigned argmax_nb_visits(const dnode &v) const {
-        std::vector<unsigned> nb_visits;
-        for(auto &c: v.children) {
-            nb_visits.emplace_back(c->get_nb_visits());
-        }
-        return argmax(nb_visits);
-    }
-
-    /**
-     * @brief Recommended action
-     *
-     * Get the recommended action from an input decision node.
-     * @param {const dnode &} v; input decision node
-     * @return Return the recommended action at the input decision node.
-     */
-    std::shared_ptr<action> recommended_action(const dnode &v) {
-        //return v.children.at(argmax_nb_visits(v))->a; // higher number of visits
-        return v.children.at(argmax_value(v))->a; // higher value
-    }
+//    /**
+//     * @brief Build tree
+//     *
+//     * Build a tree at the input root node.
+//     * @param {dnode &} root; reference to the input root node
+//     */
+//    void build_tree(dnode &root) {
+//        for(unsigned i=0; i<budget; ++i) {
+//            MD mod = model.get_copy();
+//            search_tree(&root, mod);
+//        }
+//        nb_cnodes = 0;
+//    }
+//
+//    /**
+//     * @brief Argmax value
+//     *
+//     * Get the indice of the child with the maximum value.
+//     * @param {const dnode &} v; input decision node
+//     * @return Return the indice of the child with the maximum value.
+//     */
+//    unsigned argmax_value(const dnode &v) const {
+//        std::vector<double> values;
+//        for(auto &c: v.children) {
+//            values.emplace_back(c->get_value());
+//        }
+//        return argmax(values);
+//    }
+//
+//    /**
+//     * @brief Argmax visit counter
+//     *
+//     * Get the indice of the child with the maximum number of visits.
+//     * @param {const dnode &} v; input decision node
+//     * @return Return the indice of the child with the maximum number of visits.
+//     */
+//    unsigned argmax_nb_visits(const dnode &v) const {
+//        std::vector<unsigned> nb_visits;
+//        for(auto &c: v.children) {
+//            nb_visits.emplace_back(c->get_nb_visits());
+//        }
+//        return argmax(nb_visits);
+//    }
+//
+//    /**
+//     * @brief Recommended action
+//     *
+//     * Get the recommended action from an input decision node.
+//     * @param {const dnode &} v; input decision node
+//     * @return Return the recommended action at the input decision node.
+//     */
+//    std::shared_ptr<action> recommended_action(const dnode &v) {
+//        //return v.children.at(argmax_nb_visits(v))->a; // higher number of visits
+//        return v.children.at(argmax_value(v))->a; // higher value
+//    }
 
     action apply(const state &s) const override {
-        dnode root(s,s.get_action_space());
-        build_tree(root);
-        return recommended_action(root);
+        return rand_element(s.get_action_space());
+//        dnode root(s,s.get_action_space());
+//        build_tree(root);
+//        return recommended_action(root);
     }
 
     void process_reward(

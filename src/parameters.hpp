@@ -7,7 +7,7 @@
 #include <agent.hpp>
 #include <exceptions.hpp>
 #include <policy.hpp>
-//#include <mcts_policy.hpp>
+#include <mcts_policy.hpp>
 #include <random_policy.hpp>
 #include <state.hpp>
 
@@ -23,7 +23,7 @@ public:
     // Policy parameters
     bool IS_MODEL_DYNAMIC;
     double DISCOUNT_FACTOR;
-    double UCT_CST;
+    double UCT_PARAMETER;
     unsigned TREE_SEARCH_BUDGET;
     unsigned DEFAULT_POLICY_HORIZON;
 
@@ -40,24 +40,33 @@ public:
 
         IS_MODEL_DYNAMIC = true;
         DISCOUNT_FACTOR = 0.9;
-        UCT_CST = 0.7;
+        UCT_PARAMETER = 0.7;
         TREE_SEARCH_BUDGET = 2;
         DEFAULT_POLICY_HORIZON = 1;
     }
 
     agent build_agent(environment &en) const {
-        auto po = build_policy();
+        auto po = build_policy(en);
         return agent(
             po,
             en.get_initial_node_ptr(INITIAL_LOCATION)
         );
     }
 
-    std::unique_ptr<policy> build_policy() const {
+    std::unique_ptr<policy> build_policy(environment &en) const {
         switch(POLICY_SELECTOR) {
-            /*case 0: { // mcts policy
-                return std::unique_ptr<policy> (new mcts_policy());
-            }*/
+            case 0: { // mcts policy
+                return std::unique_ptr<policy> (
+                    new mcts_policy(
+                        &en,
+                        IS_MODEL_DYNAMIC,
+                        DISCOUNT_FACTOR,
+                        UCT_PARAMETER,
+                        TREE_SEARCH_BUDGET,
+                        DEFAULT_POLICY_HORIZON
+                    )
+                );
+            }
             default: { // random policy
                 return std::unique_ptr<policy> (new random_policy());
             }
