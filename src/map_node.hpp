@@ -11,6 +11,14 @@ public:
     map_node(std::string _name, bool _is_terminal) : name(_name), is_terminal(_is_terminal) {
         //
     }
+
+    void print() const {
+        std::cout << "Map node - ";
+        std::cout << "name: " << name << "; ";
+        std::cout << "nbedges: " << edges.size() << "; ";
+        std::cout << "terminal: " << is_terminal << "\n";
+        assert(edges.size() == edges_costs.size());
+    }
 };
 
 #endif // MAP_NODE_HPP_

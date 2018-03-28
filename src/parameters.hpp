@@ -4,20 +4,28 @@
 #include <fstream>
 #include <sstream>
 
+#include <agent.hpp>
 #include <exceptions.hpp>
 #include <policy.hpp>
-#include <mcts_policy.hpp>
+//#include <mcts_policy.hpp>
 #include <random_policy.hpp>
 #include <state.hpp>
 
 class parameters {
 public:
+    // Simulation parameters
     unsigned SIMULATION_LIMIT_TIME;
     unsigned POLICY_SELECTOR;
     std::string INITIAL_LOCATION;
     std::string TERMINAL_LOCATION;
     std::string GRAPH_DURATION_MATRIX_PATH;
     char CSV_SEP;
+    // Policy parameters
+    bool IS_MODEL_DYNAMIC;
+    double DISCOUNT_FACTOR;
+    double UCT_CST;
+    unsigned TREE_SEARCH_BUDGET;
+    unsigned DEFAULT_POLICY_HORIZON;
 
     /**
      * @brief Default constructor
@@ -25,24 +33,38 @@ public:
     parameters() {
         SIMULATION_LIMIT_TIME = 20;
         POLICY_SELECTOR = 0;
-        INITIAL_LOCATION = "Shuttle";
-        TERMINAL_LOCATION = "Lava castle";
+        INITIAL_LOCATION = "A";
+        TERMINAL_LOCATION = "C";
         GRAPH_DURATION_MATRIX_PATH = "data/duration_matrix.csv";
         CSV_SEP = ';';
+
+        IS_MODEL_DYNAMIC = true;
+        DISCOUNT_FACTOR = 0.9;
+        UCT_CST = 0.7;
+        TREE_SEARCH_BUDGET = 2;
+        DEFAULT_POLICY_HORIZON = 1;
+    }
+
+    agent build_agent(environment &en) const {
+        auto po = build_policy();
+        return agent(
+            po,
+            en.get_initial_node_ptr(INITIAL_LOCATION)
+        );
     }
 
     std::unique_ptr<policy> build_policy() const {
         switch(POLICY_SELECTOR) {
-            case 0: { // mcts policy
+            /*case 0: { // mcts policy
                 return std::unique_ptr<policy> (new mcts_policy());
-            }
+            }*/
             default: { // random policy
                 return std::unique_ptr<policy> (new random_policy());
             }
         }
     }
 
-    std::vector<std::vector<std::string>> extract_duration_matrix() {
+    std::vector<std::vector<std::string>> extract_duration_matrix() const {
         std::filebuf fb;
         if (fb.open(GRAPH_DURATION_MATRIX_PATH,std::ios::in)) {
             std::vector<std::vector<std::string>> dm;
@@ -90,9 +112,16 @@ public:
         return v;
     }
 
+    environment build_environment() const {
+        std::vector<unsigned> ts;
+        std::vector<map_node> nv;
+        parse_environment(ts,nv);
+        return environment(ts,nv);
+    }
+
     void parse_environment(
         std::vector<unsigned> &ts,
-        std::vector<map_node> &nv)
+        std::vector<map_node> &nv) const
     {
         std::vector<std::vector<std::string>> dm = extract_duration_matrix();
         // 0. Extract time scale
@@ -114,17 +143,17 @@ public:
         }
         // 2. Create edges
         for(unsigned i=1; i<dm.size(); ++i) {
-            unsigned orig = 0, dest = 0;
+            unsigned orig_nd_indice = 0, dest_nd_indice = 0;
             for(unsigned k=0; k<nv.size(); ++k) {
                 if(nv.at(k).name.compare(dm.at(i).at(0)) == 0) {
-                    orig = k;
+                    orig_nd_indice = k;
                 }
                 if(nv.at(k).name.compare(dm.at(i).at(1)) == 0) {
-                    dest = k;
+                    dest_nd_indice = k;
                 }
             }
-            nv.at(orig).edges.emplace_back(&nv.at(dest));
-            nv.at(orig).edges_costs.push_back(get_durations(i,dm));
+            nv.at(orig_nd_indice).edges.emplace_back(&nv.at(dest_nd_indice));
+            nv.at(orig_nd_indice).edges_costs.push_back(get_durations(i,dm));
         }
     }
 };

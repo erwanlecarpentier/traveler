@@ -8,9 +8,9 @@ public:
     action apply(const state &s) const override {
         return rand_element(s.get_action_space());
         /*
-        if(s.node->edges.size() > 0) {
-            unsigned indice = rand_indice(s.node->edges);
-            return action(s.node->edges[indice]->name);
+        if(s.nd_ptr->edges.size() > 0) {
+            unsigned indice = rand_indice(s.nd_ptr->edges);
+            return action(s.nd_ptr->edges[indice]->name);
         } else {
             throw no_action_exception();
         }

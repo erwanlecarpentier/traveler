@@ -40,12 +40,11 @@ public:
     /**
      * @brief Get number of visits
      *
-     * Get the value of the node.
-     * This is the mean of the sampled returns.
-     * @return Return the value of the node.
+     * Get the number of visits.
+     * @return Return the number of visits of the node.
      */
-    double get_nb_visits() const {
-        return (double) sampled_returns.size();
+    unsigned get_nb_visits() const {
+        return sampled_returns.size();
     }
 
     /**
@@ -56,7 +55,7 @@ public:
      * @return Return the value of the node.
      */
     double get_value() const {
-        return std::accumulate(sampled_returns.begin(),sampled_returns.end(),0.0) / get_nb_visits();
+        return std::accumulate(sampled_returns.begin(),sampled_returns.end(),0.0) / ((double) get_nb_visits());
     }
 };
 

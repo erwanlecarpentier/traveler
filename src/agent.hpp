@@ -2,7 +2,6 @@
 #define AGENT_HPP_
 
 #include <action.hpp>
-#include <parameters.hpp>
 #include <policy.hpp>
 #include <state.hpp>
 
@@ -19,8 +18,8 @@ public:
      *
      * Constructs an object given the initial location.
      */
-    agent(const parameters &p, map_node *ptr) :
-        po(std::move(p.build_policy())),
+    agent(std::unique_ptr<policy> &_po, map_node *ptr) :
+        po(std::move(_po)),
         s(0,ptr),
         s_p(0,ptr),
         a(""),
