@@ -29,7 +29,7 @@ void run(bool print) {
     unsigned k = 0;
     for(k = 0; k < p.SIMULATION_LIMIT_TIME; ++k) {
         ag.apply_policy();
-        en.transition(ag.s,ag.a,ag.r,ag.s_p);
+        en.transition(ag.s,ag.s.t,ag.a,ag.r,ag.s_p);
         ag.process_reward();
         if(print) print_informations(k,ag);
         ag.step();

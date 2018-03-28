@@ -33,13 +33,14 @@ public:
 
     void transition(
         const state &s,
+        double t,
         const action &a,
         double &r,
         state &s_p)
     {
         unsigned indice = 0;
         if(is_action_valid(s,a,indice)) {
-            r = s.get_time_to_successor(indice,time_scale);
+            r = s.get_time_to_successor(indice,t,time_scale);
             s_p = state(
                 s.t + r,
                 s.get_ptr_to_successor(indice)

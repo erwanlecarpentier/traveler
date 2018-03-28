@@ -48,9 +48,10 @@ public:
      */
     double get_time_to_successor(
         unsigned su_ind,
+        double t_request,
         std::vector<unsigned> &ts) const
     {
-        std::tuple<unsigned,unsigned> ti_ind = get_uplow_indices(t,ts);
+        std::tuple<unsigned,unsigned> ti_ind = get_uplow_indices(t_request,ts);
         std::vector<unsigned> c = nd_ptr->edges_costs.at(su_ind);
         double c_m, c_p = c.at(std::get<1>(ti_ind));
         double t_m, t_p = ts.at(std::get<1>(ti_ind));
@@ -62,7 +63,7 @@ public:
             c_m = c.at(std::get<0>(ti_ind));
             t_m = ts.at(std::get<0>(ti_ind));
         }
-        return ((c_p - c_m) / (t_p - t_m)) * t + (c_m * t_p - c_p * t_m) / (t_p - t_m);
+        return ((c_p - c_m) / (t_p - t_m)) * t_request + (c_m * t_p - c_p * t_m) / (t_p - t_m);
     }
 
     /**
