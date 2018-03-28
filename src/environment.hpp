@@ -6,6 +6,7 @@
 
 class environment {
 public:
+    double reward_scaling_max;
     std::vector<unsigned> time_scale;
     std::vector<map_node> nodes_vector;
 
@@ -13,8 +14,10 @@ public:
      * @brief Constructor
      */
     environment(
+        double _reward_scaling_max,
         std::vector<unsigned> &_time_scale,
         std::vector<map_node> &_nodes_vector) :
+        reward_scaling_max(_reward_scaling_max),
         time_scale(_time_scale),
         nodes_vector(std::move(_nodes_vector))
     {
@@ -31,6 +34,15 @@ public:
         return false;
     }
 
+    double reward_from_duration(double duration) const {
+        assert(!is_less_than(duration,0.));
+        if(is_greater_than(duration,reward_scaling_max)) {
+            return 1.;
+        } else {
+            return 0.5 * (cos(3.1415926535897 * duration / reward_scaling_max) + 1);
+        }
+    }
+
     void transition(
         const state &s,
         double t,
@@ -40,11 +52,12 @@ public:
     {
         unsigned indice = 0;
         if(is_action_valid(s,a,indice)) {
-            r = s.get_time_to_successor(indice,t,time_scale);
+            double duration = s.get_time_to_successor(indice,t,time_scale);
             s_p = state(
-                s.t + r,
+                s.t + duration,
                 s.get_ptr_to_successor(indice)
             );
+            r = reward_from_duration(duration);
         } else {
             throw illegal_action_exception();
         }

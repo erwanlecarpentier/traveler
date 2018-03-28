@@ -17,6 +17,7 @@ public:
     // Simulation parameters
     unsigned SIMULATION_LIMIT_TIME;
     // Environment parameters
+    bool REWARD_SCALING_MAX;
     bool GENERATE_MAP;
 
     bool SYMMETRIC_GRAPH;
@@ -52,6 +53,7 @@ public:
             display_libconfig_parse_exception(e);
         }
         if(cfg.lookupValue("simulation_limit_time",SIMULATION_LIMIT_TIME)
+        && cfg.lookupValue("reward_scaling_max",REWARD_SCALING_MAX)
         && cfg.lookupValue("generate_map",GENERATE_MAP)
         && cfg.lookupValue("symmetric_graph",SYMMETRIC_GRAPH)
         && cfg.lookupValue("nb_time_steps",NB_TIME_STEPS)
@@ -347,7 +349,7 @@ public:
             nv.at(orig_nd_indice).edges.emplace_back(&nv.at(dest_nd_indice));
             nv.at(orig_nd_indice).edges_costs.push_back(get_durations(i,dm));
         }
-        return environment(ts,nv);
+        return environment(REWARD_SCALING_MAX,ts,nv);
     }
 };
 
