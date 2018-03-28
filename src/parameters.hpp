@@ -19,13 +19,14 @@ public:
     // Environment parameters
     bool GENERATE_MAP;
 
-    unsigned NB_TIME_STEPS = 10;
-    unsigned TIME_STEPS_WIDTH = 200;
-    unsigned NB_NODES = 5;
-    unsigned MIN_NB_EDGES_PER_NODE = 1;
-    int INITIAL_DURATION_MIN = 50;
-    int INITIAL_DURATION_MAX = 150;
-    int DURATION_VARIATION_MAX = 50;
+    bool SYMMETRIC_GRAPH;
+    unsigned NB_TIME_STEPS;
+    unsigned TIME_STEPS_WIDTH;
+    unsigned NB_NODES;
+    unsigned MIN_NB_EDGES_PER_NODE;
+    int INITIAL_DURATION_MIN;
+    int INITIAL_DURATION_MAX;
+    int DURATION_VARIATION_MAX;
 
     std::string INITIAL_LOCATION;
     std::string TERMINAL_LOCATION;
@@ -52,6 +53,7 @@ public:
         }
         if(cfg.lookupValue("simulation_limit_time",SIMULATION_LIMIT_TIME)
         && cfg.lookupValue("generate_map",GENERATE_MAP)
+        && cfg.lookupValue("symmetric_graph",SYMMETRIC_GRAPH)
         && cfg.lookupValue("nb_time_steps",NB_TIME_STEPS)
         && cfg.lookupValue("time_steps_width",TIME_STEPS_WIDTH)
         && cfg.lookupValue("nb_nodes",NB_NODES)
@@ -123,8 +125,11 @@ public:
     environment build_environment() const {
         std::vector<std::vector<std::string>> dm;
         if(GENERATE_MAP) {
-            //dm = build_random_connected_directed_duration_matrix();
-            dm = build_random_connected_symmetric_directed_duration_matrix();
+            if(SYMMETRIC_GRAPH) {
+                dm = build_random_connected_symmetric_directed_duration_matrix();
+            } else {
+                dm = build_random_connected_directed_duration_matrix();
+            }
         } else {
             dm = extract_duration_matrix();
         }
