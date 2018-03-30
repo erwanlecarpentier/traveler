@@ -14,11 +14,11 @@ public:
     bool is_model_dynamic; ///< Is the model dynamic
     double discount_factor; ///< Discount factor
     double uct_parameter; ///< UCT parameter
+    double terminal_state_value; ///< Terminal state value
     unsigned budget; ///< Budget ie number of expanded nodes in the tree
     unsigned horizon; ///< Horizon for the default policy simulation
     unsigned mcts_strategy_switch; ///< Strategy switch for MCTS algorithm
 
-    double terminal_state_value; ///< Terminal state value
     unsigned nb_calls; ///< Number of calls to the generative model
     unsigned nb_cnodes; ///< Number of expanded chance nodes
 
@@ -30,6 +30,7 @@ public:
         bool _is_model_dynamic,
         double _discount_factor,
         double _uct_parameter,
+        double _terminal_state_value,
         unsigned _budget,
         unsigned _horizon,
         unsigned _mcts_strategy_switch) :
@@ -37,11 +38,11 @@ public:
         is_model_dynamic(_is_model_dynamic),
         discount_factor(_discount_factor),
         uct_parameter(_uct_parameter),
+        terminal_state_value(_terminal_state_value),
         budget(_budget),
         horizon(_horizon),
         mcts_strategy_switch(_mcts_strategy_switch)
     {
-        terminal_state_value = 0.;
         nb_calls = 0;
         nb_cnodes = 0;
     }

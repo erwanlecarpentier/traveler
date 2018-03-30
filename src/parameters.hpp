@@ -17,7 +17,7 @@ public:
     // Simulation parameters
     unsigned SIMULATION_LIMIT_TIME;
     // Environment parameters
-    bool REWARD_SCALING_MAX;
+    double REWARD_SCALING_MAX;
     bool GENERATE_MAP;
 
     bool SYMMETRIC_GRAPH;
@@ -38,6 +38,7 @@ public:
     bool IS_MODEL_DYNAMIC;
     double DISCOUNT_FACTOR;
     double UCT_PARAMETER;
+    double TERMINAL_STATE_VALUE;
     unsigned TREE_SEARCH_BUDGET;
     unsigned DEFAULT_POLICY_HORIZON;
 
@@ -71,6 +72,7 @@ public:
         && cfg.lookupValue("is_model_dynamic",IS_MODEL_DYNAMIC)
         && cfg.lookupValue("discount_factor",DISCOUNT_FACTOR)
         && cfg.lookupValue("uct_parameter",UCT_PARAMETER)
+        && cfg.lookupValue("terminal_state_value",TERMINAL_STATE_VALUE)
         && cfg.lookupValue("tree_search_budget",TREE_SEARCH_BUDGET)
         && cfg.lookupValue("default_policy_horizon",DEFAULT_POLICY_HORIZON)) {
             /* Nothing to do */
@@ -106,7 +108,7 @@ public:
                 return std::unique_ptr<policy> (
                     new mcts_policy(
                         &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
-                        TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 38
+                        TERMINAL_STATE_VALUE, TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 38
                     )
                 );
             }
@@ -114,7 +116,7 @@ public:
                 return std::unique_ptr<policy> (
                     new mcts_policy(
                         &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
-                        TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 0
+                        TERMINAL_STATE_VALUE, TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 0
                     )
                 );
             }
