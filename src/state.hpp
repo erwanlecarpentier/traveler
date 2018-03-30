@@ -84,7 +84,9 @@ public:
             }
             return v;
         } else {
-            throw no_action_exception();
+            std::vector<action> v{nd_ptr->name};
+            return v;
+            //throw no_action_exception(); //deprecated
         }
     }
 

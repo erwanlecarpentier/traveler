@@ -7,6 +7,8 @@
 class environment {
 public:
     double reward_scaling_max;
+    double terminal_reward;
+    double noop_reward;
     std::vector<unsigned> time_scale;
     std::vector<map_node> nodes_vector;
 
@@ -15,15 +17,25 @@ public:
      */
     environment(
         double _reward_scaling_max,
+        double _terminal_reward,
+        double _noop_reward,
         std::vector<unsigned> &_time_scale,
         std::vector<map_node> &_nodes_vector) :
         reward_scaling_max(_reward_scaling_max),
+        terminal_reward(_terminal_reward),
+        noop_reward(_noop_reward),
         time_scale(_time_scale),
         nodes_vector(std::move(_nodes_vector))
     {
         //print_environment();
     }
 
+    /**
+     * @brief Is action valid
+     *
+     * Check whether the action is valid and if so modify the input indice as the one of the
+     * successor edge.
+     */
     bool is_action_valid(const state &s, const action &a, unsigned &indice) const {
         for(unsigned i=0; i<s.nd_ptr->edges.size(); ++i) {
             if(s.nd_ptr->edges[i]->name.compare(a.direction) == 0) {
@@ -51,14 +63,23 @@ public:
         state &s_p)
     {
         unsigned indice = 0;
-        if(is_action_valid(s,a,indice)) {
+        if(a.direction.compare(s.nd_ptr->name) == 0) { // No operation
+            s_p = s;
+            r = noop_reward;
+        } else if(is_action_valid(s,a,indice)) { // Go to edge
             double duration = s.get_time_to_successor(indice,t,time_scale);
             s_p = state(
                 s.t + duration,
                 s.get_ptr_to_successor(indice)
             );
-            r = reward_from_duration(duration);
-        } else {
+            if(s_p.nd_ptr->is_terminal) {
+                r = terminal_reward;
+            } else {
+                r = reward_from_duration(duration);
+            }
+        } else { // Illegal action
+            std::cout << "s " << s.nd_ptr->name << std::endl;
+            std::cout << "a " << a.direction << std::endl;
             throw illegal_action_exception();
         }
     }

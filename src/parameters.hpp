@@ -8,6 +8,7 @@
 #include <agent.hpp>
 #include <exceptions.hpp>
 #include <mcts_policy.hpp>
+#include <tmcts_policy.hpp>
 #include <policy.hpp>
 #include <random_policy.hpp>
 #include <state.hpp>
@@ -18,6 +19,8 @@ public:
     unsigned SIMULATION_LIMIT_TIME;
     // Environment parameters
     double REWARD_SCALING_MAX;
+    double TERMINAL_REWARD;
+    double NOOP_REWARD;
     bool GENERATE_MAP;
 
     bool SYMMETRIC_GRAPH;
@@ -55,6 +58,8 @@ public:
         }
         if(cfg.lookupValue("simulation_limit_time",SIMULATION_LIMIT_TIME)
         && cfg.lookupValue("reward_scaling_max",REWARD_SCALING_MAX)
+        && cfg.lookupValue("terminal_reward",TERMINAL_REWARD)
+        && cfg.lookupValue("noop_reward",NOOP_REWARD)
         && cfg.lookupValue("generate_map",GENERATE_MAP)
         && cfg.lookupValue("symmetric_graph",SYMMETRIC_GRAPH)
         && cfg.lookupValue("nb_time_steps",NB_TIME_STEPS)
@@ -104,19 +109,38 @@ public:
 
     std::unique_ptr<policy> build_policy(environment &en) const {
         switch(POLICY_SELECTOR) {
-            case 0: { // MCTS policy
-                return std::unique_ptr<policy> (
-                    new mcts_policy(
-                        &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
-                        TERMINAL_STATE_VALUE, TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 38
-                    )
-                );
+            case 0: { // random policy
+                return std::unique_ptr<policy> (new random_policy());
             }
-            case 1: { // UCT policy
+            case 1: { // MCTS policy
                 return std::unique_ptr<policy> (
                     new mcts_policy(
                         &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
                         TERMINAL_STATE_VALUE, TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 0
+                    )
+                );
+            }
+            case 2: { // UCT policy
+                return std::unique_ptr<policy> (
+                    new mcts_policy(
+                        &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
+                        TERMINAL_STATE_VALUE, TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 1
+                    )
+                );
+            }
+            case 3: { // TMCTS policy
+                return std::unique_ptr<policy> (
+                    new tmcts_policy(
+                        &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
+                        TERMINAL_STATE_VALUE, TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 0
+                    )
+                );
+            }
+            case 4: { // TUCT policy
+                return std::unique_ptr<policy> (
+                    new tmcts_policy(
+                        &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
+                        TERMINAL_STATE_VALUE, TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 1
                     )
                 );
             }
@@ -351,7 +375,7 @@ public:
             nv.at(orig_nd_indice).edges.emplace_back(&nv.at(dest_nd_indice));
             nv.at(orig_nd_indice).edges_costs.push_back(get_durations(i,dm));
         }
-        return environment(REWARD_SCALING_MAX,ts,nv);
+        return environment(REWARD_SCALING_MAX,TERMINAL_REWARD,NOOP_REWARD,ts,nv);
     }
 };
 
