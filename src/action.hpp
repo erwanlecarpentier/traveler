@@ -11,7 +11,7 @@ public:
         //
     }
 
-    bool is_equal_to(action a) {
+    bool is_equal_to(action a) const {
         return (direction.compare(a.direction) == 0);
     }
 };

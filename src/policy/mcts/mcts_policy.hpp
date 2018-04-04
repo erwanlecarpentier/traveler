@@ -14,7 +14,6 @@ public:
     bool is_model_dynamic; ///< Is the model dynamic
     double discount_factor; ///< Discount factor
     double uct_parameter; ///< UCT parameter
-    double terminal_state_value; ///< Terminal state value
     unsigned budget; ///< Budget ie number of expanded nodes in the tree
     unsigned horizon; ///< Horizon for the default policy simulation
     unsigned mcts_strategy_switch; ///< Strategy switch for MCTS algorithm
@@ -30,7 +29,6 @@ public:
         bool _is_model_dynamic,
         double _discount_factor,
         double _uct_parameter,
-        double _terminal_state_value,
         unsigned _budget,
         unsigned _horizon,
         unsigned _mcts_strategy_switch) :
@@ -38,7 +36,6 @@ public:
         is_model_dynamic(_is_model_dynamic),
         discount_factor(_discount_factor),
         uct_parameter(_uct_parameter),
-        terminal_state_value(_terminal_state_value),
         budget(_budget),
         horizon(_horizon),
         mcts_strategy_switch(_mcts_strategy_switch)
@@ -71,7 +68,7 @@ public:
      */
     double sample_return(cnode * ptr, double t_ref) {
         if(envt_ptr->is_state_terminal(ptr->s)) {
-            return terminal_state_value;
+            return envt_ptr->terminal_reward;
         }
         double total_return = 0.;
         state s = ptr->s;
@@ -212,7 +209,7 @@ public:
      */
     double search_tree(dnode * v, double t_root) {
         if(envt_ptr->is_state_terminal(v->s)) { // terminal node
-            return terminal_state_value;
+            return envt_ptr->terminal_reward;
         } else if(!v->is_fully_expanded()) { // leaf node, expand it
             return evaluate(v,t_root);
         } else { // apply tree policy
@@ -288,6 +285,28 @@ public:
     action recommended_action(const dnode &v) {
         //return v.children.at(argmax_nb_visits(v))->a; // higher number of visits
         return v.children.at(argmax_value(v))->a; // higher value
+    }
+
+    void print_tree(const dnode &v) const {
+        std::cout << "Root : " << v.s.nd_ptr->name << std::endl;
+        std::cout << "d1   : ";
+        for(auto &cn_ch : v.children) {
+            for(auto &dn_ch : cn_ch->children) {
+                std::cout << dn_ch->s.nd_ptr->name << "(" << cn_ch->s.nd_ptr->name << ") ";
+            }
+        }
+        std::cout << std::endl;
+        std::cout << "d2   : ";
+        for(auto &cn_ch : v.children) {
+            for(auto &dn_ch : cn_ch->children) {
+                for(auto &a : dn_ch->children) {
+                    for(auto &b : a->children) {
+                        std::cout << b->s.nd_ptr->name << "(" << a->s.nd_ptr->name << ") ";
+                    }
+                }
+            }
+        }
+        std::cout << std::endl;
     }
 
     action apply(const state &s) override {
