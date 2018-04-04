@@ -53,7 +53,6 @@ public:
      */
     double get_value() const {
         std::vector<double> children_values = get_children_values();
-        //return children.at(argmax(children_values))->get_value();
         return *std::max_element(children_values.begin(),children_values.end());
     }
 
@@ -99,16 +98,29 @@ public:
      * Create a child (hence a chance node).
      * The action of the child is randomly selected.
      * @param {const std::vector<estimates_history> &} ehc; vector of estimate histories
+     * @param {double} t_ref; time at the root node when the child was created
      * @return Return the sampled action.
      * @warning Remove the sampled action from the actions vector.
      */
-    action create_child(std::vector<estimates_history> &ehc) {
+    action create_child(
+        std::vector<estimates_history> &ehc,
+        double t_ref,
+        double regression_regularization,
+        double polynomial_regression_degree) {
         unsigned indice = rand_indice(actions);
         action ac = actions.at(indice);
         actions.erase(actions.begin() + indice);
         children.emplace_back(
             std::unique_ptr<tmp_cnode>(
-                new tmp_cnode(get_ptr_to_eh(ehc,s,ac),s,ac,depth)
+                new tmp_cnode(
+                    get_ptr_to_eh(ehc,s,ac),
+                    s,
+                    ac,
+                    t_ref,
+                    regression_regularization,
+                    polynomial_regression_degree,
+                    depth
+                )
             )
         );
         return ac;

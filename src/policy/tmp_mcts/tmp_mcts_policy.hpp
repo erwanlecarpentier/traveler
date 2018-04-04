@@ -10,10 +10,6 @@
 
 class tmp_mcts_policy : public policy {
 public:
-    std::vector<estimates_history> eh_container; ///< Estimates history container
-
-//// COPY OF MCTS_POLICY ////////////////////////////////////////////////////////////////////
-
     random_policy default_policy; ///< Default policy
     environment * envt_ptr; ///< Generative model (pointer to the real environment)
     bool is_model_dynamic; ///< Is the model dynamic
@@ -22,6 +18,9 @@ public:
     unsigned budget; ///< Budget ie number of expanded nodes in the tree
     unsigned horizon; ///< Horizon for the default policy simulation
     unsigned mcts_strategy_switch; ///< Strategy switch for MCTS algorithm
+    std::vector<estimates_history> eh_container; ///< Estimates history container
+    double regression_regularization;
+    unsigned polynomial_regression_degree;
 
     unsigned nb_calls; ///< Number of calls to the generative model
     unsigned nb_tmp_cnodes; ///< Number of expanded chance nodes
@@ -36,18 +35,24 @@ public:
         double _uct_parameter,
         unsigned _budget,
         unsigned _horizon,
-        unsigned _mcts_strategy_switch) :
+        unsigned _mcts_strategy_switch,
+        double _regression_regularization,
+        double _polynomial_regression_degree) :
         envt_ptr(_envt_ptr),
         is_model_dynamic(_is_model_dynamic),
         discount_factor(_discount_factor),
         uct_parameter(_uct_parameter),
         budget(_budget),
         horizon(_horizon),
-        mcts_strategy_switch(_mcts_strategy_switch)
+        mcts_strategy_switch(_mcts_strategy_switch),
+        regression_regularization(_regression_regularization),
+        polynomial_regression_degree(_polynomial_regression_degree)
     {
         nb_calls = 0;
         nb_tmp_cnodes = 0;
     }
+
+//// COPY OF MCTS_POLICY ////////////////////////////////////////////////////////////////////
 
     void generative_model(
         const state &s,
@@ -166,22 +171,6 @@ public:
                 return mcts_strategy(v);
             }
         }
-    }
-
-    /**
-     * @brief Evaluate
-     *
-     * Create a new child node to a decision node and sample a return value with the default
-     * policy.
-     * @param {tmp_dnode *} v; pointer to the decision node
-     * @return Return the sampled value.
-     */
-    double evaluate(tmp_dnode * v, double t_ref) {
-        nb_tmp_cnodes++; // a chance node will be created
-        v->create_child(eh_container);
-        double q = sample_return(v->children.back().get(),t_ref);
-        update_value(v->children.back().get(),q);
-        return q;
     }
 
     /**
@@ -315,7 +304,6 @@ public:
     }
 
     void print_tree_hist(const tmp_dnode &v) const {
-        std::cout << "--------------------------------------\n";
         std::cout << "ROOT : " << v.s.get_name() << std::endl;
         std::cout << "d0   :\n";
         for(auto &cn_ch : v.children) {
@@ -339,8 +327,6 @@ public:
                 }
             }
         }
-        std::cout << "--------------------------------------\n";
-        std::cout << std::endl;
     }
 
     void process_reward(
@@ -358,13 +344,34 @@ public:
 //// END COPY OF MCTS_POLICY ////////////////////////////////////////////////////////////////
 
     /**
+     * @brief Evaluate
+     *
+     * Create a new child node to a decision node and sample a return value with the default
+     * policy.
+     * @param {tmp_dnode *} v; pointer to the decision node
+     * @return Return the sampled value.
+     */
+    double evaluate(tmp_dnode * v, double t_ref) {
+        nb_tmp_cnodes++; // a chance node will be created
+        v->create_child(
+            eh_container,
+            t_ref,
+            regression_regularization,
+            polynomial_regression_degree
+        );
+        double q = sample_return(v->children.back().get(),t_ref);
+        update_value(v->children.back().get(),q);
+        return q;
+    }
+
+    /**
      * @brief Add chance node estimate
      */
     void add_cnode_estimate(std::unique_ptr<tmp_cnode> &ptr, double t_ref) {
         bool no_match = true;
         for(auto &eh : eh_container) {
             if(eh.corresponds_to(ptr->s,ptr->a)) {
-                eh.add_estimate(t_ref,ptr->s.t,ptr->get_value());
+                eh.add_estimate(t_ref,ptr->s.t,ptr->get_sampled_returns_mean());
                 no_match = false;
             }
         }
@@ -374,7 +381,7 @@ public:
                 ptr->a.direction,
                 t_ref,
                 ptr->s.t,
-                ptr->get_value()
+                ptr->get_sampled_returns_mean()
             );
         }
     }
@@ -403,7 +410,8 @@ public:
     action apply(const state &s) override {
         tmp_dnode root(s);
         build_tree(root);
-        update_estimate_histories(root,root.s.t);return recommended_action(root);
+        update_estimate_histories(root,root.s.t);
+        return recommended_action(root);
     }
 };
 

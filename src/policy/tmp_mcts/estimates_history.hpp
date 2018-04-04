@@ -80,6 +80,13 @@ public:
             e.print();
         }
     }
+
+    /**
+     * @brief Is history empty
+     */
+    bool is_history_empty() {
+        return hist.size() == 0;
+    }
 };
 
 #endif // ESTIMATES_HISTORY_HPP_

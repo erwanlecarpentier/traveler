@@ -1,5 +1,5 @@
 CCC=g++
-INCLUDE=-I./src -I./src/policy -I./src/policy/mcts -I./src/policy/tmp_mcts
+INCLUDE=-I./src -I./src/utils -I./src/policy -I./src/policy/mcts -I./src/policy/tmp_mcts
 CCFLAGS=-std=c++11 -Wall -Wextra ${INCLUDE} -O2 -g
 LDFLAGS=-s -lm -lconfig++
 EXEC=exe

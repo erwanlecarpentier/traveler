@@ -46,6 +46,8 @@ public:
     double UCT_PARAMETER;
     unsigned TREE_SEARCH_BUDGET;
     unsigned DEFAULT_POLICY_HORIZON;
+    double REGRESSION_REGULARIZATION;
+    unsigned POLYNOMIAL_REGRESSION_DEGREE;
 
     /**
      * @brief Default constructor
@@ -80,7 +82,9 @@ public:
         && cfg.lookupValue("discount_factor",DISCOUNT_FACTOR)
         && cfg.lookupValue("uct_parameter",UCT_PARAMETER)
         && cfg.lookupValue("tree_search_budget",TREE_SEARCH_BUDGET)
-        && cfg.lookupValue("default_policy_horizon",DEFAULT_POLICY_HORIZON)) {
+        && cfg.lookupValue("default_policy_horizon",DEFAULT_POLICY_HORIZON)
+        && cfg.lookupValue("regression_regularization",REGRESSION_REGULARIZATION)
+        && cfg.lookupValue("polynomial_regression_degree",POLYNOMIAL_REGRESSION_DEGREE)) {
             /* Nothing to do */
         }
         else { // Error in config file
@@ -133,7 +137,8 @@ public:
                 return std::unique_ptr<policy> (
                     new tmp_mcts_policy(
                         &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
-                        TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 0
+                        TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 0,
+                        REGRESSION_REGULARIZATION, POLYNOMIAL_REGRESSION_DEGREE
                     )
                 );
             }
@@ -141,7 +146,8 @@ public:
                 return std::unique_ptr<policy> (
                     new tmp_mcts_policy(
                         &en, IS_MODEL_DYNAMIC, DISCOUNT_FACTOR, UCT_PARAMETER,
-                        TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 1
+                        TREE_SEARCH_BUDGET, DEFAULT_POLICY_HORIZON, 1,
+                        REGRESSION_REGULARIZATION, POLYNOMIAL_REGRESSION_DEGREE
                     )
                 );
             }
