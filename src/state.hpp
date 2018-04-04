@@ -17,8 +17,12 @@ public:
         //
     }
 
-    std::string get_location_name() {
+    std::string get_name() const {
         return nd_ptr->name;
+    }
+
+    unsigned get_nb_edges() const {
+        return nd_ptr->edges.size();
     }
 
     /**
@@ -77,14 +81,14 @@ public:
      * @return Return the vector of available actions.
      */
     std::vector<action> get_action_space() const {
-        if(nd_ptr->edges.size() > 0) {
+        if(get_nb_edges() > 0) {
             std::vector<action> v;
             for(auto &dest_nd_ptr : nd_ptr->edges) {
                 v.emplace_back(dest_nd_ptr->name);
             }
             return v;
         } else {
-            std::vector<action> v{nd_ptr->name};
+            std::vector<action> v{get_name()};
             return v;
             //throw no_action_exception();
         }
@@ -96,11 +100,11 @@ public:
 
     void print() const {
         std::cout << "State - ";
-        std::cout << "name: " << nd_ptr->name << "; ";
+        std::cout << "name: " << get_name() << "; ";
         std::cout << "time: " << t << "; ";
-        std::cout << "nbedges: " << nd_ptr->edges.size() << "; ";
+        std::cout << "nbedges: " << get_nb_edges() << "; ";
         std::cout << "goal: " << nd_ptr->is_goal << "\n";
-        assert(nd_ptr->edges.size() == nd_ptr->edges_costs.size());
+        assert(get_nb_edges() == nd_ptr->edges_costs.size());
     }
 };
 

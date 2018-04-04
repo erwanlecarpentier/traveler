@@ -16,9 +16,8 @@
 void print_informations(unsigned k, agent &ag) {
     std::cout << "step: " << k;
     std::cout << " time: " << ag.s.t;
-    std::cout << " location: " << ag.s.nd_ptr->name;
+    std::cout << " location: " << ag.s.get_name();
     std::cout << " goto: " << ag.a.direction;
-    //std::cout << " goto: " << ag.s_p.nd_ptr->name;
     std::cout << " r: " << ag.r << std::endl;
 }
 

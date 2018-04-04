@@ -293,11 +293,11 @@ public:
     }
 
     void print_tree(const tmp_dnode &v) const {
-        std::cout << "Root : " << v.s.nd_ptr->name << std::endl;
+        std::cout << "Root : " << v.s.get_name() << std::endl;
         std::cout << "d1   : ";
         for(auto &cn_ch : v.children) {
             for(auto &dn_ch : cn_ch->children) {
-                std::cout << dn_ch->s.nd_ptr->name << "(" << cn_ch->s.nd_ptr->name << ") ";
+                std::cout << dn_ch->s.get_name() << "(" << cn_ch->s.get_name() << ") ";
             }
         }
         std::cout << std::endl;
@@ -306,7 +306,7 @@ public:
             for(auto &dn_ch : cn_ch->children) {
                 for(auto &a : dn_ch->children) {
                     for(auto &b : a->children) {
-                        std::cout << b->s.nd_ptr->name << "(" << a->s.nd_ptr->name << ") ";
+                        std::cout << b->s.get_name() << "(" << a->s.get_name() << ") ";
                     }
                 }
             }
@@ -341,7 +341,7 @@ public:
         }
         if(no_match) {
             eh_container.emplace_back(
-                ptr->s.nd_ptr->name,
+                ptr->s.get_name(),
                 ptr->a.direction,
                 t_ref,
                 ptr->s.t,

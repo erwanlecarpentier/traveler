@@ -67,7 +67,7 @@ public:
      */
     bool corresponds_to(state &st, action &ac) {
         return (
-            location.compare(st.nd_ptr->name) == 0 &&
+            location.compare(st.get_name()) == 0 &&
             direction.compare(ac.direction) == 0
         );
     }

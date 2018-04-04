@@ -37,7 +37,7 @@ public:
      * successor edge.
      */
     bool is_action_valid(const state &s, const action &a, unsigned &indice) const {
-        for(unsigned i=0; i<s.nd_ptr->edges.size(); ++i) {
+        for(unsigned i=0; i<s.get_nb_edges(); ++i) {
             if(s.nd_ptr->edges[i]->name.compare(a.direction) == 0) {
                 indice = i;
                 return true;
@@ -50,7 +50,7 @@ public:
      * @brief Is the state a dead-end
      */
     bool is_dead_end(const state &st) const {
-        if((st.nd_ptr->edges.size() == 0) && !st.nd_ptr->is_goal) {
+        if((st.get_nb_edges() == 0) && !st.nd_ptr->is_goal) {
             return true;
         } else {
             return false;
