@@ -178,7 +178,7 @@ public:
      */
     double evaluate(tmp_dnode * v, double t_ref) {
         nb_tmp_cnodes++; // a chance node will be created
-        v->create_child();
+        v->create_child(eh_container);
         double q = sample_return(v->children.back().get(),t_ref);
         update_value(v->children.back().get(),q);
         return q;
@@ -314,6 +314,35 @@ public:
         std::cout << std::endl;
     }
 
+    void print_tree_hist(const tmp_dnode &v) const {
+        std::cout << "--------------------------------------\n";
+        std::cout << "ROOT : " << v.s.get_name() << std::endl;
+        std::cout << "d0   :\n";
+        for(auto &cn_ch : v.children) {
+            if(cn_ch->eh_ptr == nullptr) {
+                std::cout << "nullptr (s: " << cn_ch->s.get_name();
+                std::cout << " a: " << cn_ch->a.direction << ")\n";
+            } else {
+                cn_ch->eh_ptr->print();
+            }
+        }
+        std::cout << "d1   :\n";
+        for(auto &cn_ch : v.children) {
+            for(auto &dn_ch : cn_ch->children) {
+                for(auto &a : dn_ch->children) {
+                    if(a->eh_ptr == nullptr) {
+                        std::cout << "nullptr (s: " << a->s.get_name();
+                        std::cout << " a: " << a->a.direction << ")\n";
+                    } else {
+                        a->eh_ptr->print();
+                    }
+                }
+            }
+        }
+        std::cout << "--------------------------------------\n";
+        std::cout << std::endl;
+    }
+
     void process_reward(
         const state &s,
         const action &a,
@@ -374,9 +403,7 @@ public:
     action apply(const state &s) override {
         tmp_dnode root(s);
         build_tree(root);
-        update_estimate_histories(root,root.s.t);
-        print_estimate_histories();
-        return recommended_action(root);
+        update_estimate_histories(root,root.s.t);return recommended_action(root);
     }
 };
 

@@ -31,22 +31,6 @@ public:
     }
 
     /**
-     * @brief Create Child
-     *
-     * Create a child (hence a chance node).
-     * The action of the child is randomly selected.
-     * @return Return the sampled action.
-     * @warning Remove the sampled action from the actions vector.
-     */
-    action create_child() {
-        unsigned indice = rand_indice(actions);
-        action sampled_action = actions.at(indice);
-        actions.erase(actions.begin() + indice);
-        children.emplace_back(std::unique_ptr<tmp_cnode>(new tmp_cnode(s,sampled_action,depth)));
-        return sampled_action;
-    }
-
-    /**
      * @brief Get children values
      *
      * Get an ordered vector containing all the values of the children.
@@ -86,6 +70,49 @@ public:
 
 //// END COPY OF DNODE //////////////////////////////////////////////////////////////////////
 
+    /**
+     * @brief Get a pointer to the corresponding estimates history
+     *
+     * Given a vector of estimate histories, get a pointer to the one corresponding to the
+     * input state-action pair.
+     * @param {const std::vector<estimates_history> &} ehc; vector of estimate histories
+     * @param {const state &} st; state
+     * @param {const action &} ac; action
+     * @return Return the pointer.
+     */
+    estimates_history * get_ptr_to_eh(
+        std::vector<estimates_history> &ehc,
+        const state &st,
+        const action &ac) const
+    {
+        for(auto &eh : ehc) {
+            if(eh.corresponds_to(st,ac)) {
+                return &eh;
+            }
+        }
+        return nullptr; // no match
+    }
+
+    /**
+     * @brief Create Child
+     *
+     * Create a child (hence a chance node).
+     * The action of the child is randomly selected.
+     * @param {const std::vector<estimates_history> &} ehc; vector of estimate histories
+     * @return Return the sampled action.
+     * @warning Remove the sampled action from the actions vector.
+     */
+    action create_child(std::vector<estimates_history> &ehc) {
+        unsigned indice = rand_indice(actions);
+        action ac = actions.at(indice);
+        actions.erase(actions.begin() + indice);
+        children.emplace_back(
+            std::unique_ptr<tmp_cnode>(
+                new tmp_cnode(get_ptr_to_eh(ehc,s,ac),s,ac,depth)
+            )
+        );
+        return ac;
+    }
 };
 
 #endif // TMP_DNODE_HPP_

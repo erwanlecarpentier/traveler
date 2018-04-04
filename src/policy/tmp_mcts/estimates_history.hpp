@@ -65,7 +65,7 @@ public:
      *
      * Test whether the history corresponds to the given state-action pair.
      */
-    bool corresponds_to(state &st, action &ac) {
+    bool corresponds_to(const state &st, const action &ac) const {
         return (
             location.compare(st.get_name()) == 0 &&
             direction.compare(ac.direction) == 0

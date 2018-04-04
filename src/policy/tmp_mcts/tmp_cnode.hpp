@@ -1,6 +1,8 @@
 #ifndef TMP_CNODE_HPP_
 #define TMP_CNODE_HPP_
 
+#include <estimates_history.hpp>
+
 class tmp_dnode; // forward declaration
 
 /**
@@ -22,9 +24,11 @@ public:
      * @brief Constructor
      */
     tmp_cnode(
+        estimates_history * _eh_ptr,
         state _s,
         action _a,
         double _depth = 0) :
+        eh_ptr(_eh_ptr),
         s(_s),
         a(_a),
         depth(_depth)
