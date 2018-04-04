@@ -86,7 +86,7 @@ public:
         } else {
             std::vector<action> v{nd_ptr->name};
             return v;
-            //throw no_action_exception(); //deprecated
+            //throw no_action_exception();
         }
     }
 
@@ -99,7 +99,7 @@ public:
         std::cout << "name: " << nd_ptr->name << "; ";
         std::cout << "time: " << t << "; ";
         std::cout << "nbedges: " << nd_ptr->edges.size() << "; ";
-        std::cout << "terminal: " << nd_ptr->is_terminal << "\n";
+        std::cout << "goal: " << nd_ptr->is_goal << "\n";
         assert(nd_ptr->edges.size() == nd_ptr->edges_costs.size());
     }
 };

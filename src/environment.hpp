@@ -7,8 +7,8 @@
 class environment {
 public:
     double reward_scaling_max;
-    double terminal_reward;
-    double noop_reward;
+    double goal_reward;
+    double dead_end_reward;
     std::vector<unsigned> time_scale;
     std::vector<map_node> nodes_vector;
 
@@ -17,13 +17,13 @@ public:
      */
     environment(
         double _reward_scaling_max,
-        double _terminal_reward,
-        double _noop_reward,
+        double _goal_reward,
+        double _dead_end_reward,
         std::vector<unsigned> &_time_scale,
         std::vector<map_node> &_nodes_vector) :
         reward_scaling_max(_reward_scaling_max),
-        terminal_reward(_terminal_reward),
-        noop_reward(_noop_reward),
+        goal_reward(_goal_reward),
+        dead_end_reward(_dead_end_reward),
         time_scale(_time_scale),
         nodes_vector(std::move(_nodes_vector))
     {
@@ -46,12 +46,56 @@ public:
         return false;
     }
 
+    /**
+     * @brief Is the state a dead-end
+     */
+    bool is_dead_end(const state &st) const {
+        if((st.nd_ptr->edges.size() == 0) && !st.nd_ptr->is_goal) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @brief Is state terminal
+     *
+     * Check whether the input state is terminal.
+     * A terminal state is either a dead-end or the goal.
+     */
+    bool is_state_terminal(const state &st) const {
+        return st.nd_ptr->is_goal || is_dead_end(st);
+    }
+
+    /**
+     * @brief Get terminal reward
+     */
+    double get_terminal_reward(const state &st) const {
+        assert(is_state_terminal(st));
+        if(is_dead_end(st)) {
+            return dead_end_reward;
+        } else {
+            return goal_reward;
+        }
+    }
+
     double reward_from_duration(double duration) const {
         assert(!is_less_than(duration,0.));
         if(is_greater_than(duration,reward_scaling_max)) {
-            return 0.;
+            return -1.;
         } else {
-            return 0.5 * (cos(3.1415926535897 * duration / reward_scaling_max) + 1);
+            return 0.5 * (cos(3.1415926535897 * duration / reward_scaling_max) + 1) - 1.;
+        }
+    }
+
+    /**
+     * @brief Reward function
+     */
+    double reward_function(const state &st, double duration) {
+        if(is_state_terminal(st)) {
+            return get_terminal_reward(st);
+        } else {
+            return reward_from_duration(duration);
         }
     }
 
@@ -63,29 +107,16 @@ public:
         state &s_p)
     {
         unsigned indice = 0;
-        if(a.direction.compare(s.nd_ptr->name) == 0) { // No operation
-            s_p = s;
-            r = noop_reward;
-        } else if(is_action_valid(s,a,indice)) { // Go to edge
+        if(is_action_valid(s,a,indice)) { // Go to edge
             double duration = s.get_time_to_successor(indice,t,time_scale);
             s_p = state(
                 s.t + duration,
                 s.get_ptr_to_successor(indice)
             );
-            if(s_p.nd_ptr->is_terminal) {
-                r = terminal_reward;
-            } else {
-                r = reward_from_duration(duration);
-            }
+            r = reward_function(s_p,duration);
         } else { // Illegal action
-            std::cout << "s " << s.nd_ptr->name << std::endl;
-            std::cout << "a " << a.direction << std::endl;
             throw illegal_action_exception();
         }
-    }
-
-    bool is_state_terminal(const state &s) const {
-        return s.nd_ptr->is_terminal;
     }
 
     map_node * find_node_by_name(const std::string &name) {
