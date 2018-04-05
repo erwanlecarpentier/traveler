@@ -21,6 +21,9 @@ void print_informations(unsigned k, agent &ag) {
     std::cout << " r: " << ag.r << std::endl;
 }
 
+/**
+ * @brief Run using the parameters
+ */
 void run(const char *cfg_path, bool print) {
     parameters p(cfg_path);
     environment en = p.build_environment();
@@ -39,9 +42,6 @@ void run(const char *cfg_path, bool print) {
     if(print) print_informations(k + 1,ag);
 }
 
-/**
- * @brief Main function
- */
 int main() {
     try {
         std::clock_t c_start = std::clock();

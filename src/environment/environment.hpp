@@ -99,6 +99,9 @@ public:
         }
     }
 
+    /**
+     * @brief Transition function
+     */
     void transition(
         const state &s,
         double t,
@@ -119,6 +122,9 @@ public:
         }
     }
 
+    /**
+     * @brief Find node by name
+     */
     map_node * find_node_by_name(const std::string &name) {
         for(auto &nd : nodes_vector) {
             if(nd.name.compare(name) == 0) {
@@ -129,10 +135,9 @@ public:
         return nullptr;
     }
 
-    map_node * get_initial_node_ptr(const std::string &name) {
-        return find_node_by_name(name);
-    }
-
+    /**
+     * @brief Print
+     */
     void print_environment() {
         std::cout << "Printing map graph:\nNodes:\n";
         for(auto &nd : nodes_vector) {

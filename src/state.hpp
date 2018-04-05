@@ -3,19 +3,16 @@
 
 #include <exceptions.hpp>
 #include <map_node.hpp>
+#include <utils.hpp>
 
 class state {
 public:
     double t; ///< time
     map_node * nd_ptr; ///< location in the graph
 
-    state() {
-        //
-    }
+    state() {}
 
-    state(unsigned _t, map_node * _nd_ptr) : t(_t), nd_ptr(_nd_ptr) {
-        //
-    }
+    state(unsigned _t, map_node * _nd_ptr) : t(_t), nd_ptr(_nd_ptr) {}
 
     std::string get_name() const {
         return nd_ptr->name;
@@ -71,7 +68,11 @@ public:
             c_m = c.at(std::get<0>(ti_ind));
             t_m = ts.at(std::get<0>(ti_ind));
         }
-        return ((c_p - c_m) / (t_p - t_m)) * t_request + (c_m * t_p - c_p * t_m) / (t_p - t_m);
+        double duration = ((c_p - c_m) / (t_p - t_m)) * t_request + (c_m * t_p - c_p * t_m) / (t_p - t_m);
+        if(is_less_than(duration,0.)) {
+            duration = 0.;
+        }
+        return duration;
     }
 
     /**
