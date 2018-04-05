@@ -183,14 +183,6 @@ public:
                 dm.push_back(create_random_edge(orig_ind,i,nodes_names));
             }
         }
-        //TODO rm
-        for(auto &line : dm) {
-            for(auto &cell : line) {
-                std::cout << cell << " | ";
-            }
-            std::cout << std::endl;
-        }
-        //TRM
         return dm;
     }
 
@@ -248,14 +240,6 @@ public:
                 dm.push_back(create_random_edge(dest_ind,i,nodes_names));
             }
         }
-        //TODO rm
-        for(auto &line : dm) {
-            for(auto &cell : line) {
-                std::cout << cell << " | ";
-            }
-            std::cout << std::endl;
-        }
-        //TRM
         return dm;
     }
 
@@ -290,6 +274,11 @@ public:
         }
     }
 
+    /**
+     * @brief Save duration matrix
+     *
+     * Save the input duration matrix at the specified output path.
+     */
     void save_duration_matrix(
         const std::vector<std::vector<std::string>> &dm,
         const std::string &path) const
