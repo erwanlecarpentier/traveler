@@ -26,14 +26,15 @@ public:
     double DEAD_END_REWARD;
     bool GENERATE_MAP;
 
+    unsigned SAMPLER_SELECTOR;
     bool SYMMETRIC_GRAPH;
     unsigned NB_TIME_STEPS;
     unsigned TIME_STEPS_WIDTH;
     unsigned NB_NODES;
     unsigned MIN_NB_EDGES_PER_NODE;
-    int INITIAL_DURATION_MIN;
-    int INITIAL_DURATION_MAX;
-    int DURATION_VARIATION_MAX;
+    double INITIAL_DURATION_MIN;
+    double INITIAL_DURATION_MAX;
+    double DURATION_VARIATION_MAX;
 
     std::string INITIAL_LOCATION;
     std::string TERMINAL_LOCATION;
@@ -66,6 +67,7 @@ public:
         && cfg.lookupValue("goal_reward",GOAL_REWARD)
         && cfg.lookupValue("dead_end_reward",DEAD_END_REWARD)
         && cfg.lookupValue("generate_map",GENERATE_MAP)
+        && cfg.lookupValue("sampler_selector",SAMPLER_SELECTOR)
         && cfg.lookupValue("symmetric_graph",SYMMETRIC_GRAPH)
         && cfg.lookupValue("nb_time_steps",NB_TIME_STEPS)
         && cfg.lookupValue("time_steps_width",TIME_STEPS_WIDTH)
@@ -169,6 +171,7 @@ public:
      */
     environment build_environment() const {
         map_builder mb(
+            SAMPLER_SELECTOR,
             NB_TIME_STEPS,
             TIME_STEPS_WIDTH,
             NB_NODES,

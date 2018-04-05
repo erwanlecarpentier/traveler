@@ -4,13 +4,14 @@
 class map_builder {
 public:
     // Parameters for auto-generated map
+    unsigned sampler_selector;
     unsigned nb_time_steps;
     unsigned time_steps_width;
     unsigned nb_nodes;
     unsigned min_nb_edges_per_node;
-    int initial_duration_min;
-    int initial_duration_max;
-    int duration_variation_max;
+    double initial_duration_min;
+    double initial_duration_max;
+    double duration_variation_max;
 
     // Parameters for imported map
     std::string terminal_location;
@@ -18,16 +19,18 @@ public:
     std::string csv_sep;
 
     map_builder(
+        unsigned _sampler_selector,
         unsigned _nb_time_steps,
         unsigned _time_steps_width,
         unsigned _nb_nodes,
         unsigned _min_nb_edges_per_node,
-        int _initial_duration_min,
-        int _initial_duration_max,
-        int _duration_variation_max,
+        double _initial_duration_min,
+        double _initial_duration_max,
+        double _duration_variation_max,
         std::string _terminal_location,
         std::string _graph_duration_matrix_path,
         std::string _csv_sep) :
+        sampler_selector(_sampler_selector),
         nb_time_steps(_nb_time_steps),
         time_steps_width(_time_steps_width),
         nb_nodes(_nb_nodes),
@@ -40,6 +43,71 @@ public:
         csv_sep(_csv_sep)
     {}
 
+    void bound_variation(double &v) const {
+        if(is_less_than(v,-duration_variation_max)) {
+            v = -duration_variation_max;
+        } else if (is_greater_than(v,duration_variation_max)) {
+            v = +duration_variation_max;
+        }
+    }
+
+    void first_order_random_uniform(std::vector<double> &vec, double &v) const {
+        vec.push_back(vec.back() + v);
+        v = uniform_double(-duration_variation_max,duration_variation_max);
+    }
+
+    void secnd_order_random_uniform(std::vector<double> &vec, double &v) const {
+        vec.push_back(vec.back() + v);
+        v += uniform_double(-duration_variation_max / 2.,duration_variation_max / 2.);
+        bound_variation(v);
+    }
+
+    void secnd_order_epsilon_random_uniform(std::vector<double> &vec, double &v) const {
+        vec.push_back(vec.back() + v);
+        if(is_less_than(uniform_double(0.,1.),0.5)) {
+            v += uniform_double(-duration_variation_max / 2.,duration_variation_max / 2.);
+        }
+        if(is_less_than(uniform_double(0.,1.),0.1)) {
+            v = -v;
+        }
+        bound_variation(v);
+    }
+
+    void append_duration(std::vector<double> &vec, double &v) const {
+        switch(sampler_selector) {
+            case 0: {
+                first_order_random_uniform(vec,v);
+                break;
+            }
+            case 1: {
+                secnd_order_random_uniform(vec,v);
+                break;
+            }
+            case 2: {
+                secnd_order_epsilon_random_uniform(vec,v);
+                break;
+            }
+            default: {
+                first_order_random_uniform(vec,v);
+                break;
+            }
+        }
+    }
+
+    std::vector<double> sample_durations() const {
+        std::vector<double> vec = {
+            uniform_double(initial_duration_min,initial_duration_max)
+        };
+        double v = uniform_double(-duration_variation_max,duration_variation_max);
+        for(unsigned j=0; j<nb_time_steps; ++j) {
+            append_duration(vec,v);
+            if(is_less_than(vec.back(),0.)) {
+                vec.back() = 0.;
+            }
+        }
+        return vec;
+    }
+
     /**
      * @brief Create random edge
      */
@@ -51,15 +119,9 @@ public:
         std::vector<std::string> new_line;
         new_line.push_back(nodes_names.at(orig_ind));
         new_line.push_back(nodes_names.at(dest_ind));
-        unsigned d = (unsigned) abs(uniform_integer(initial_duration_min,initial_duration_max));
-        for(unsigned j=0; j<nb_time_steps+1; ++j) {
+        std::vector<double> durations = sample_durations();
+        for(auto &d : durations) {
             new_line.push_back(std::to_string(d));
-            int var = uniform_integer(-duration_variation_max,duration_variation_max);
-            if ((abs(var) > d) && var < 0) {
-                d = 0;
-            } else {
-                d += var;
-            }
         }
         return new_line;
     }
@@ -109,6 +171,14 @@ public:
                 dm.push_back(create_random_edge(orig_ind,i,nodes_names));
             }
         }
+        //TODO rm
+        for(auto &line : dm) {
+            for(auto &cell : line) {
+                std::cout << cell << " | ";
+            }
+            std::cout << std::endl;
+        }
+        //TRM
         return dm;
     }
 
@@ -166,8 +236,7 @@ public:
                 dm.push_back(create_random_edge(dest_ind,i,nodes_names));
             }
         }
-
-        //TRM
+        //TODO rm
         for(auto &line : dm) {
             for(auto &cell : line) {
                 std::cout << cell << " | ";
