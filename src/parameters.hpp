@@ -19,6 +19,9 @@ class parameters {
 public:
     // Simulation parameters
     unsigned SIMULATION_LIMIT_TIME;
+    unsigned NB_SIMULATIONS;
+    std::string CFG_PATH;
+    std::string BACKUP_PATH;
 
     // Environment parameters
     double REWARD_SCALING_MAX;
@@ -56,15 +59,18 @@ public:
     /**
      * @brief Default constructor
      */
-    parameters(const char *cfg_path) {
+    parameters(std::string &cfg_path) {
         libconfig::Config cfg;
+        CFG_PATH = cfg_path;
         try {
-            cfg.readFile(cfg_path);
+            cfg.readFile(cfg_path.c_str());
         }
         catch(const libconfig::ParseException &e) {
             display_libconfig_parse_exception(e);
         }
         if(cfg.lookupValue("simulation_limit_time",SIMULATION_LIMIT_TIME)
+        && cfg.lookupValue("nb_simulations",NB_SIMULATIONS)
+        && cfg.lookupValue("backup_path",BACKUP_PATH)
         && cfg.lookupValue("reward_scaling_max",REWARD_SCALING_MAX)
         && cfg.lookupValue("goal_reward",GOAL_REWARD)
         && cfg.lookupValue("dead_end_reward",DEAD_END_REWARD)
@@ -82,7 +88,7 @@ public:
         && cfg.lookupValue("output_duration_matrix",OUTPUT_DURATION_MATRIX)
         && cfg.lookupValue("initial_location",INITIAL_LOCATION)
         && cfg.lookupValue("terminal_location",TERMINAL_LOCATION)
-        && cfg.lookupValue("graph_duration_matrix",GRAPH_DURATION_MATRIX_PATH)
+        && cfg.lookupValue("graph_duration_matrix_path",GRAPH_DURATION_MATRIX_PATH)
         && cfg.lookupValue("csv_sep",CSV_SEP)
         && cfg.lookupValue("policy_selector",POLICY_SELECTOR)
         && cfg.lookupValue("is_model_dynamic",IS_MODEL_DYNAMIC)
@@ -97,6 +103,24 @@ public:
         else { // Error in config file
             throw wrong_syntax_configuration_file_exception();
         }
+    }
+
+    //TODO
+    std::string get_backup_path_from_parameters_path() {
+        std::string bp = "data/";
+        bool copy_name = false;
+        for(unsigned i=0; i<CFG_PATH.size(); ++i) {
+            if(CFG_PATH.at(i) == '.') {
+                break;
+            }
+            if(copy_name) {
+                bp.push_back(CFG_PATH.at(i));
+            } else if(CFG_PATH.at(i) == '/') {
+                copy_name = true;
+            }
+        }
+        bp += "_backup.csv";
+        return bp;
     }
 
     /**
