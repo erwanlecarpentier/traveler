@@ -73,6 +73,12 @@ public:
         bound_variation(v);
     }
 
+    /**
+     * @brief Append duration
+     *
+     * Append a new sampled duration to the duration vector and modify the
+     * inter time-step duration variation according to the selected model.
+     */
     void append_duration(std::vector<double> &vec, double &v) const {
         switch(sampler_selector) {
             case 0: {
@@ -94,6 +100,12 @@ public:
         }
     }
 
+    /**
+     * @brief Sample durations
+     *
+     * Build a vector containing the durations associated to an edge
+     * at each time step.
+     */
     std::vector<double> sample_durations() const {
         std::vector<double> vec = {
             uniform_double(initial_duration_min,initial_duration_max)
@@ -276,6 +288,28 @@ public:
         } else {
             throw duration_matrix_file_exception();
         }
+    }
+
+    void save_duration_matrix(
+        const std::vector<std::vector<std::string>> &dm,
+        const std::string &path) const
+    {
+        std::ofstream ofs;
+        ofs.open(path);
+        assert(dm.size() > 1);
+        assert(dm.at(0).size() > 2);
+        unsigned nrow = dm.size();
+        unsigned ncol = dm.at(0).size();
+        for(unsigned i=0; i<nrow; ++i) {
+            for(unsigned j=0; j<ncol; ++j) {
+                ofs << dm.at(i).at(j);
+                if(j < ncol - 1) {
+                    ofs << csv_sep.at(0);
+                }
+            }
+            ofs << "\n";
+        }
+        ofs.close();
     }
 
     /**

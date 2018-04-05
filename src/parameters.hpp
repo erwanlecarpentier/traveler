@@ -35,6 +35,8 @@ public:
     double INITIAL_DURATION_MIN;
     double INITIAL_DURATION_MAX;
     double DURATION_VARIATION_MAX;
+    bool SAVE_DURATION_MATRIX;
+    std::string OUTPUT_DURATION_MATRIX;
 
     std::string INITIAL_LOCATION;
     std::string TERMINAL_LOCATION;
@@ -76,6 +78,8 @@ public:
         && cfg.lookupValue("initial_duration_min",INITIAL_DURATION_MIN)
         && cfg.lookupValue("initial_duration_max",INITIAL_DURATION_MAX)
         && cfg.lookupValue("duration_variation_max",DURATION_VARIATION_MAX)
+        && cfg.lookupValue("save_duration_matrix",SAVE_DURATION_MATRIX)
+        && cfg.lookupValue("output_duration_matrix",OUTPUT_DURATION_MATRIX)
         && cfg.lookupValue("initial_location",INITIAL_LOCATION)
         && cfg.lookupValue("terminal_location",TERMINAL_LOCATION)
         && cfg.lookupValue("graph_duration_matrix",GRAPH_DURATION_MATRIX_PATH)
@@ -189,6 +193,9 @@ public:
                 dm = mb.build_random_connected_symmetric_directed_duration_matrix();
             } else {
                 dm = mb.build_random_connected_directed_duration_matrix();
+            }
+            if(SAVE_DURATION_MATRIX) {
+                mb.save_duration_matrix(dm,OUTPUT_DURATION_MATRIX);
             }
         } else {
             dm = mb.extract_duration_matrix();
