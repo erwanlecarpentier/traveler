@@ -28,7 +28,11 @@ void save_vector(
 	outfile.open(output_path,mode);
 	for(unsigned int i=0; i<v.size(); ++i) {
 		outfile << v[i];
+<<<<<<< HEAD
 		if(i<v.size()-1) {
+=======
+		if(i < v.size() - 1) {
+>>>>>>> ba0992646334203cc6706527f0b26f9432fa99f2
             outfile << separator;
 		}
 	}

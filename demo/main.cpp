@@ -55,6 +55,9 @@ void run(
     }
 }
 
+/**
+ * @brief Test function
+ */
 void test(char * n) {
     // Init
     std::string path(n);
@@ -63,7 +66,7 @@ void test(char * n) {
 
     // Simulate
     for(unsigned i=0; i<p.NB_SIMULATIONS; ++i) {
-        for(unsigned j=0; j<1; ++j) {
+        for(unsigned j=0; j<100; ++j) {
             std::string map_path = "config/backup/map" + std::to_string(j) + ".csv";
             p.GRAPH_DURATION_MATRIX_PATH = map_path;
             run(p,false,true,backup_vector);

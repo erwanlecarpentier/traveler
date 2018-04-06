@@ -21,7 +21,7 @@ public:
     unsigned SIMULATION_LIMIT_TIME;
     unsigned NB_SIMULATIONS;
     std::string CFG_PATH;
-    std::string BACKUP_PATH;
+    //std::string BACKUP_PATH;
 
     // Environment parameters
     double REWARD_SCALING_MAX;
@@ -70,7 +70,7 @@ public:
         }
         if(cfg.lookupValue("simulation_limit_time",SIMULATION_LIMIT_TIME)
         && cfg.lookupValue("nb_simulations",NB_SIMULATIONS)
-        && cfg.lookupValue("backup_path",BACKUP_PATH)
+        //&& cfg.lookupValue("backup_path",BACKUP_PATH)
         && cfg.lookupValue("reward_scaling_max",REWARD_SCALING_MAX)
         && cfg.lookupValue("goal_reward",GOAL_REWARD)
         && cfg.lookupValue("dead_end_reward",DEAD_END_REWARD)
