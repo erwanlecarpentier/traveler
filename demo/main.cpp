@@ -65,12 +65,10 @@ void test(char * n) {
     std::vector<std::vector<double>> backup_vector;
 
     // Simulate
+    bool print = true;
+    bool backp = false;
     for(unsigned i=0; i<p.NB_SIMULATIONS; ++i) {
-        for(unsigned j=0; j<100; ++j) {
-            std::string map_path = "config/backup/map" + std::to_string(j) + ".csv";
-            p.GRAPH_DURATION_MATRIX_PATH = map_path;
-            run(p,false,true,backup_vector);
-        }
+        run(p,print,backp,backup_vector);
     }
 
     // Save
@@ -95,7 +93,7 @@ int main(int argc, char ** argv) {
         if(argc == 2) {
             test(argv[1]);
         } else {
-            std::cout << "No arguments\n";
+            std::cout << "No parameters\n";
         }
 
         std::clock_t c_end = std::clock();
