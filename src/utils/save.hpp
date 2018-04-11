@@ -26,7 +26,7 @@ void save_vector(
 {
     std::ofstream outfile;
 	outfile.open(output_path,mode);
-	for(unsigned int i=0; i<v.size(); ++i) {
+	for(unsigned i=0; i<v.size(); ++i) {
 		outfile << v[i];
 		if(i<v.size()-1) {
             outfile << separator;
@@ -53,8 +53,8 @@ template <class T>
 void save_matrix(
     const std::vector<std::vector<T>> &m,
     const std::string &output_path,
-    const std::string &separator,
-	std::ofstream::openmode mode = std::ofstream::out)
+	std::ofstream::openmode mode = std::ofstream::out,
+    const std::string &separator = ",")
 {
     for(auto &line : m) {
         save_vector(line,output_path,separator,mode);
@@ -73,7 +73,7 @@ void save_matrix(
 void initialize_backup(
     const std::vector<std::string> &names,
     const std::string &output_path,
-    const std::string &separator)
+    const std::string &separator = ",")
 {
     save_vector(names,output_path,separator,std::ofstream::out);
 }
@@ -91,6 +91,17 @@ std::vector<std::string> get_saved_values_names() {
     v.emplace_back("computational_cost");
     v.emplace_back("nb_calls");
     return v;
+}
+
+template <class T>
+void save_csv(
+    const std::vector<std::string> &names,
+    const std::vector<std::vector<T>> &m,
+    const std::string &output_path,
+    const std::string &separator = ",")
+{
+    initialize_backup(names,output_path,separator);
+    save_matrix(m,output_path,std::ofstream::app);
 }
 
 #endif // SAVE_HPP_
