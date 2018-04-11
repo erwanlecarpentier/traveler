@@ -56,33 +56,55 @@ void run(
 }
 
 /**
+ * @brief Simple run for display
+ */
+void single_run(char * n) {
+    std::string path(n);
+    parameters p(path);
+    std::vector<std::vector<double>> v;
+    run(p,true,false,v);
+}
+
+/**
+ * @brief Generate map
+ */
+void generate_maps(char * n) {
+    // Init
+    std::string path(n);
+    parameters p(path);
+    // Build
+    for(unsigned i=0; i<5; ++i) {
+        p.OUTPUT_DURATION_MATRIX = "config/map" + std::to_string(i) + ".cfg";
+        environment en = p.build_environment();
+    }
+}
+
+/**
  * @brief Test function
  */
 void test(char * n) {
     // Init
     std::string path(n);
     parameters p(path);
-    std::vector<std::vector<double>> backup_vector;
-
-    // Simulate
-    bool print = true;
-    bool backp = false;
-    for(unsigned i=0; i<p.NB_SIMULATIONS; ++i) {
-        run(p,print,backp,backup_vector);
+    std::vector<unsigned> policies = {0,2,4};
+    for(auto k : policies) {
+        std::vector<std::vector<double>> backup_vector;
+        p.POLICY_SELECTOR = k;
+        p.BACKUP_PATH = "data/backup" + std::to_string(p.POLICY_SELECTOR) + ".csv";
+        for(unsigned m=0; m<5; ++m) {
+            p.INPUT_DURATION_MATRIX = "config/backup/map" + std::to_string(m) + ".csv";
+            // Simulate
+            for(unsigned i=0; i<p.NB_SIMULATIONS; ++i) {
+                run(p,false,true,backup_vector);
+            }
+            // Save
+            save_csv(
+                std::vector<std::string>{"elapsed_time","total_return"},
+                backup_vector,
+                p.BACKUP_PATH
+            );
+        }
     }
-
-    // Save
-    initialize_backup(
-        std::vector<std::string>{"elapsed_time","total_return"},
-        p.get_backup_path_from_parameters_path(),
-        ","
-    );
-    save_matrix(
-        backup_vector,
-        p.get_backup_path_from_parameters_path(),
-        ",",
-        std::ofstream::app
-    );
 }
 
 int main(int argc, char ** argv) {
@@ -91,7 +113,9 @@ int main(int argc, char ** argv) {
         srand(time(NULL));
 
         if(argc == 2) {
-            test(argv[1]);
+            single_run(argv[1]);
+            //test(argv[1]);
+            //generate_maps(argv[1]);
         } else {
             std::cout << "No parameters\n";
         }

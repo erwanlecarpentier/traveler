@@ -15,7 +15,7 @@ public:
 
     // Parameters for imported map
     std::string terminal_location;
-    std::string graph_duration_matrix_path;
+    std::string input_duration_matrix;
     std::string csv_sep;
 
     map_builder(
@@ -28,7 +28,7 @@ public:
         double _initial_duration_max,
         double _duration_variation_max,
         std::string _terminal_location,
-        std::string _graph_duration_matrix_path,
+        std::string _input_duration_matrix,
         std::string _csv_sep) :
         sampler_selector(_sampler_selector),
         nb_time_steps(_nb_time_steps),
@@ -39,7 +39,7 @@ public:
         initial_duration_max(_initial_duration_max),
         duration_variation_max(_duration_variation_max),
         terminal_location(_terminal_location),
-        graph_duration_matrix_path(_graph_duration_matrix_path),
+        input_duration_matrix(_input_duration_matrix),
         csv_sep(_csv_sep)
     {}
 
@@ -248,7 +248,7 @@ public:
      */
     std::vector<std::vector<std::string>> extract_duration_matrix() const {
         std::filebuf fb;
-        if (fb.open(graph_duration_matrix_path,std::ios::in)) {
+        if (fb.open(input_duration_matrix,std::ios::in)) {
             std::vector<std::vector<std::string>> dm;
             std::istream is(&fb);
             while(true) {

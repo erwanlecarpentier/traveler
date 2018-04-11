@@ -91,12 +91,59 @@ public:
     /**
      * @brief Reward function
      */
-    double reward_function(const state &st, double duration) {
+    double reward_function(const state &st, double duration) const {
         if(is_state_terminal(st)) {
-            return get_terminal_reward(st);
+            return reward_from_duration(duration) + get_terminal_reward(st);
         } else {
             return reward_from_duration(duration);
         }
+    }
+
+    /**
+     * @brief Get the indices of the elements of the time scale corresponding to the
+     * direct lower element and the direct higher element.
+     */
+    std::tuple<unsigned,unsigned> get_uplow_indices(double t) const {
+        std::vector<unsigned>::const_iterator up = std::upper_bound(time_scale.begin(), time_scale.end(), t);
+        unsigned upind = up - time_scale.begin();
+        if(upind == 0) {
+            return std::make_tuple(0,0);
+        } else if(upind > time_scale.size()-1) {
+            return std::make_tuple(time_scale.size()-1,time_scale.size()-1);
+        } else {
+            return std::make_tuple(upind-1,upind);
+        }
+    }
+
+    /**
+     * @brief Get time to successor
+     *
+     * Get the duration to go to the successor designated by the given indice.
+     * @param {unsigned} su_ind; indice of the successor in node->edges
+     * @return Return the duration as a double.
+     */
+    double get_time_to_successor(
+        const state &s,
+        double t_request,
+        unsigned su_ind) const
+    {
+        std::tuple<unsigned,unsigned> ti_ind = get_uplow_indices(t_request);
+        std::vector<unsigned> c = s.nd_ptr->edges_costs.at(su_ind);
+        double c_m, c_p = c.at(std::get<1>(ti_ind));
+        double t_m, t_p = time_scale.at(std::get<1>(ti_ind));
+        if(std::get<0>(ti_ind) == std::get<1>(ti_ind)) {
+            //std::cout << "Warning, max range of duration matrix reached.\n";
+            c_m = c.at(std::get<0>(ti_ind) - 1);
+            t_m = time_scale.at(std::get<0>(ti_ind) - 1);
+        } else {
+            c_m = c.at(std::get<0>(ti_ind));
+            t_m = time_scale.at(std::get<0>(ti_ind));
+        }
+        double duration = ((c_p - c_m) / (t_p - t_m)) * t_request + (c_m * t_p - c_p * t_m) / (t_p - t_m);
+        if(is_less_than(duration,0.)) {
+            duration = 0.;
+        }
+        return duration;
     }
 
     /**
@@ -107,11 +154,11 @@ public:
         double t,
         const action &a,
         double &r,
-        state &s_p)
+        state &s_p) const
     {
         unsigned indice = 0;
         if(is_action_valid(s,a,indice)) { // Go to edge
-            double duration = s.get_time_to_successor(indice,t,time_scale);
+            double duration = get_time_to_successor(s,t,indice);
             s_p = state(
                 s.t + duration,
                 s.get_ptr_to_successor(indice)
