@@ -9,7 +9,6 @@
  */
 class tmp_dnode {
 public:
-
 //// COPY OF DNODE //////////////////////////////////////////////////////////////////////////
 
     state s; ///< Labelling state
@@ -95,8 +94,8 @@ public:
     /**
      * @brief Create Child
      *
-     * Create a child (hence a chance node).
-     * The action of the child is randomly selected.
+     * Create a chance node child.
+     * The labelling action of the child is randomly selected.
      * @param {const std::vector<estimates_history> &} ehc; vector of estimate histories
      * @param {double} t_ref; time at the root node when the child was created
      * @return Return the sampled action.
@@ -113,7 +112,7 @@ public:
         children.emplace_back(
             std::unique_ptr<tmp_cnode>(
                 new tmp_cnode(
-                    get_ptr_to_eh(ehc,s,ac),
+                    nullptr,//get_ptr_to_eh(ehc,s,ac),//TODO remove
                     s,
                     ac,
                     t_ref,

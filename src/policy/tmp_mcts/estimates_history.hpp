@@ -67,9 +67,16 @@ public:
      */
     bool corresponds_to(const state &st, const action &ac) const {
         return (
-            location.compare(st.get_name()) == 0 &&
-            direction.compare(ac.direction) == 0
+            (location.compare(st.get_name()) == 0) &&
+            (direction.compare(ac.direction) == 0)
         );
+    }
+
+    /**
+     * @brief Is history empty
+     */
+    bool is_history_empty() const {
+        return hist.size() == 0;
     }
 
     void print() const {
@@ -79,13 +86,6 @@ public:
         for(auto &e : hist) {
             e.print();
         }
-    }
-
-    /**
-     * @brief Is history empty
-     */
-    bool is_history_empty() {
-        return hist.size() == 0;
     }
 };
 

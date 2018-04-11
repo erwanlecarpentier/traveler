@@ -11,17 +11,18 @@
 class tmp_mcts_policy : public policy {
 public:
     random_policy default_policy; ///< Default policy
-    environment * envt_ptr; ///< Generative model (pointer to the real environment)
-    bool is_model_dynamic; ///< Is the model dynamic
-    double discount_factor; ///< Discount factor
-    double uct_parameter; ///< UCT parameter
-    unsigned budget; ///< Budget ie number of expanded nodes in the tree
-    unsigned horizon; ///< Horizon for the default policy simulation
-    unsigned mcts_strategy_switch; ///< Strategy switch for MCTS algorithm
-    std::vector<estimates_history> eh_container; ///< Estimates history container
-    double regression_regularization;
-    unsigned polynomial_regression_degree;
+    const environment * envt_ptr; ///< Generative model (pointer to the real environment)
+    const bool is_model_dynamic; ///< Is the model dynamic
+    const double discount_factor; ///< Discount factor
+    const double uct_parameter; ///< UCT parameter
+    const unsigned budget; ///< Budget ie number of expanded nodes in the tree
+    const unsigned horizon; ///< Horizon for the default policy simulation
+    const unsigned mcts_strategy_switch; ///< Strategy switch for MCTS algorithm
+    const double regression_regularization;
+    const unsigned polynomial_regression_degree;
 
+    std::vector<estimates_history> eh_container; ///< Estimates history container
+    double reference_time; ///< Initial time of the state at which the policy is applied
     unsigned nb_calls; ///< Number of calls to the generative model
     unsigned nb_tmp_cnodes; ///< Number of expanded chance nodes
 
@@ -399,19 +400,22 @@ public:
     }
 
     /**
+     * @brief Apply the policy
+     */
+    action apply(const state &s) override {
+        tmp_dnode root(s);
+        build_tree(root);
+        update_estimate_histories(root,root.s.t);
+        return recommended_action(root);
+    }
+
+    /**
      * @brief Print estimate histories
      */
     void print_estimate_histories() const {
         for(auto eh : eh_container) {
             eh.print();
         }
-    }
-
-    action apply(const state &s) override {
-        tmp_dnode root(s);
-        build_tree(root);
-        update_estimate_histories(root,root.s.t);
-        return recommended_action(root);
     }
 };
 

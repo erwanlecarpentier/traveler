@@ -11,15 +11,15 @@ class tmp_dnode; // forward declaration
  */
 class tmp_cnode {
 public:
-    estimates_history * eh_ptr;
-    state s; ///< Labelling state
-    action a; ///< Labelling action
+    const estimates_history * eh_ptr;
+    const state s; ///< Labelling state
+    const action a; ///< Labelling action
+    const double t_ref;
+    const double regression_regularization;
+    const unsigned polynomial_regression_degree;
+    const double depth; ///< Depth
     std::vector<std::unique_ptr<tmp_dnode>> children; ///< Child nodes
     std::vector<double> sampled_returns; ///< Sampled returns
-    double t_ref;
-    double regression_regularization;
-    unsigned polynomial_regression_degree;
-    double depth; ///< Depth
 
     /**
      * @brief Constructor
@@ -76,9 +76,9 @@ public:
     double polynomial_value_prediction() const {
         std::vector<double> x = {s.t - t_ref};
         std::vector<double> y = {get_sampled_returns_mean()};
-        for(auto & h : eh_ptr->hist) {
-            x.push_back(h.t_node - h.t_root);
-            y.push_back(h.value);
+        for(auto & e : eh_ptr->hist) {
+            x.push_back(e.t_node - e.t_root);
+            y.push_back(e.value);
         }
         return polynomial_regression_prediction_at(
             0.,polynomial_regression(
@@ -94,11 +94,21 @@ public:
      * @brief Get the value estimate
      */
     double get_value() const {
-        if(eh_ptr == nullptr || eh_ptr->is_history_empty()) {
+        if((eh_ptr == nullptr) || eh_ptr->is_history_empty()) {
             return get_sampled_returns_mean();
         } else {
             //TODO switch here
-            return polynomial_value_prediction();
+            /*
+            std::cout << std::endl;//TODO remove
+            std::cout << "is nullptr       : " << (eh_ptr == nullptr) << std::endl;
+            std::cout << "is_history_empty : " << eh_ptr->is_history_empty() << std::endl;
+            std::cout << "size             : " << eh_ptr->hist.size() << std::endl;
+            std::cout << "size < 100       : " << (eh_ptr->hist.size() < 100) << std::endl;
+            std::cout << "location         : " << eh_ptr->location << std::endl;
+            std::cout << "direction        : " << eh_ptr->direction << std::endl;
+            */
+            return get_sampled_returns_mean();//TODO remove and put next
+            //return polynomial_value_prediction();
         }
     }
 };
