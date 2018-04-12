@@ -11,20 +11,21 @@ class tmp_dnode {
 public:
 //// COPY OF DNODE //////////////////////////////////////////////////////////////////////////
 
-    state s; ///< Labelling state
+    const state s; ///< Labelling state
+    const double depth; ///< Depth
+
     std::vector<action> actions; ///< Available actions, iteratively removed
     std::vector<std::unique_ptr<tmp_cnode>> children; ///< Child nodes
-    double depth; ///< Depth
 
     /**
      * @brief Constructor
      */
     tmp_dnode(
-        state _s,
+        const state &_s,
         double _depth = 0) :
         s(_s),
-        actions(_s.get_action_space()),
-        depth(_depth)
+        depth(_depth),
+        actions(_s.get_action_space())
     {
         //
     }
@@ -79,7 +80,7 @@ public:
      * @return Return the pointer.
      */
     estimates_history * get_ptr_to_eh(
-        std::vector<estimates_history> &ehc,
+        std::list<estimates_history> &ehc,
         const state &st,
         const action &ac) const
     {
@@ -97,13 +98,13 @@ public:
      * Create a chance node child.
      * The labelling action of the child is randomly selected.
      * @param {const std::vector<estimates_history> &} ehc; vector of estimate histories
-     * @param {double} t_ref; time at the root node when the child was created
+     * @param {double} reference_time; time at the root node when the child was created
      * @return Return the sampled action.
      * @warning Remove the sampled action from the actions vector.
      */
     action create_child(
-        std::vector<estimates_history> &ehc,
-        double t_ref,
+        std::list<estimates_history> &ehc,
+        double reference_time,
         double regression_regularization,
         double polynomial_regression_degree) {
         unsigned indice = rand_indice(actions);
@@ -112,10 +113,10 @@ public:
         children.emplace_back(
             std::unique_ptr<tmp_cnode>(
                 new tmp_cnode(
-                    nullptr,//get_ptr_to_eh(ehc,s,ac),//TODO remove
+                    get_ptr_to_eh(ehc,s,ac),
                     s,
                     ac,
-                    t_ref,
+                    reference_time,
                     regression_regularization,
                     polynomial_regression_degree,
                     depth

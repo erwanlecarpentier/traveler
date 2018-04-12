@@ -21,7 +21,7 @@ public:
     const double regression_regularization;
     const unsigned polynomial_regression_degree;
 
-    std::vector<estimates_history> eh_container; ///< Estimates history container
+    std::list<estimates_history> eh_container; ///< Estimates history container
     double reference_time; ///< Initial time of the state at which the policy is applied
     unsigned nb_calls; ///< Number of calls to the generative model
     unsigned nb_tmp_cnodes; ///< Number of expanded chance nodes
@@ -59,14 +59,13 @@ public:
         const state &s,
         const action &a,
         double &r,
-        state &s_p,
-        double t_ref)
+        state &s_p)
     {
         ++nb_calls;
         if(is_model_dynamic) {
             envt_ptr->transition(s,s.t,a,r,s_p);
         } else {
-            envt_ptr->transition(s,t_ref,a,r,s_p);
+            envt_ptr->transition(s,reference_time,a,r,s_p);
         }
     }
 
@@ -77,7 +76,7 @@ public:
      * @param {state} s; input state
      * @return Return the sampled return.
      */
-    double sample_return(tmp_cnode * ptr, double t_ref) {
+    double sample_return(tmp_cnode * ptr) {
         if(envt_ptr->is_state_terminal(ptr->s)) {
             return envt_ptr->get_terminal_reward(ptr->s);
         }
@@ -87,7 +86,7 @@ public:
         for(unsigned t=0; t<horizon; ++t) {
             state s_p;
             double r = 0.;
-            generative_model(s,a,r,s_p,t_ref);
+            generative_model(s,a,r,s_p);
             total_return += pow(discount_factor,(double)t) * r;
             if(envt_ptr->is_state_terminal(s_p)) {
                 break;
@@ -199,28 +198,27 @@ public:
      * Search within the tree, starting from the input decision node.
      * Recursive method.
      * @param {tmp_dnode *} v; input decision node
-     * @param {double} t_root; time reference of the root node
      * @return Return the sampled return at the given decision node
      */
-    double search_tree(tmp_dnode * v, double t_root) {
+    double search_tree(tmp_dnode * v) {
         if(envt_ptr->is_state_terminal(v->s)) { // terminal node
             return envt_ptr->get_terminal_reward(v->s);
         } else if(!v->is_fully_expanded()) { // leaf node, expand it
-            return evaluate(v,t_root);
+            return evaluate(v);
         } else { // apply tree policy
             tmp_cnode * ptr = select_child(v);
             state s_p;
             double r = 0.;
-            generative_model(v->s,ptr->a,r,s_p,t_root);
+            generative_model(v->s,ptr->a,r,s_p);
             double q = 0.;
             unsigned ind = 0; // indice of resulting child
             if(is_state_already_sampled(ptr,s_p,ind)) { // go to node
-                q = r + discount_factor * search_tree(ptr->children.at(ind).get(),t_root);
+                q = r + discount_factor * search_tree(ptr->children.at(ind).get());
             } else { // leaf node, create a new node
                 ptr->children.emplace_back(std::unique_ptr<tmp_dnode>(
                     new tmp_dnode(s_p,ptr->depth+1)
                 ));
-                q = r + discount_factor * evaluate(ptr->get_last_child(),t_root);
+                q = r + discount_factor * evaluate(ptr->get_last_child());
             }
             update_value(ptr,q);
             return q;
@@ -235,7 +233,7 @@ public:
      */
     void build_tree(tmp_dnode &v) {
         for(unsigned i=0; i<budget; ++i) {
-            search_tree(&v,v.s.t);
+            search_tree(&v);
         }
         nb_tmp_cnodes = 0;
     }
@@ -304,6 +302,8 @@ public:
         std::cout << std::endl;
     }
 
+//// END COPY OF MCTS_POLICY ////////////////////////////////////////////////////////////////
+
     void print_tree_hist(const tmp_dnode &v) const {
         std::cout << "ROOT : " << v.s.get_name() << std::endl;
         std::cout << "d0   :\n";
@@ -339,10 +339,7 @@ public:
         (void) a;
         (void) r;
         (void) s_p;
-        // Nothing to process for MCTS policy
     }
-
-//// END COPY OF MCTS_POLICY ////////////////////////////////////////////////////////////////
 
     /**
      * @brief Evaluate
@@ -352,15 +349,15 @@ public:
      * @param {tmp_dnode *} v; pointer to the decision node
      * @return Return the sampled value.
      */
-    double evaluate(tmp_dnode * v, double t_ref) {
+    double evaluate(tmp_dnode * v) {
         nb_tmp_cnodes++; // a chance node will be created
         v->create_child(
             eh_container,
-            t_ref,
+            reference_time,
             regression_regularization,
             polynomial_regression_degree
         );
-        double q = sample_return(v->children.back().get(),t_ref);
+        double q = sample_return(v->children.back().get());
         update_value(v->children.back().get(),q);
         return q;
     }
@@ -368,21 +365,22 @@ public:
     /**
      * @brief Add chance node estimate
      */
-    void add_cnode_estimate(std::unique_ptr<tmp_cnode> &ptr, double t_ref) {
-        bool no_match = true;
+    void update_eh_from_cn(tmp_cnode * cnp) {
+        bool match = false;
         for(auto &eh : eh_container) {
-            if(eh.corresponds_to(ptr->s,ptr->a)) {
-                eh.add_estimate(t_ref,ptr->s.t,ptr->get_sampled_returns_mean());
-                no_match = false;
+            if(eh.corresponds_to(cnp->s,cnp->a)) {
+                eh.add_estimate(reference_time,cnp->s.t,cnp->get_sampled_returns_mean());
+                match = true;
+                break;
             }
         }
-        if(no_match) {
+        if(!match) {
             eh_container.emplace_back(
-                ptr->s.get_name(),
-                ptr->a.direction,
-                t_ref,
-                ptr->s.t,
-                ptr->get_sampled_returns_mean()
+                cnp->s.get_name(),
+                cnp->a.direction,
+                reference_time,
+                cnp->s.t,
+                cnp->get_sampled_returns_mean()
             );
         }
     }
@@ -390,11 +388,11 @@ public:
     /**
      * @brief Update estimate histories
      */
-    void update_estimate_histories(tmp_dnode &v, double t_ref) {
-        for(auto &ch : v.children) {
-            add_cnode_estimate(ch,t_ref);
+    void update_eh(tmp_dnode * dnp) {
+        for(auto &ch : dnp->children) {
+            update_eh_from_cn(ch.get());
             for(auto &e : ch->children) {
-                update_estimate_histories(*e,t_ref);
+                update_eh(e.get());
             }
         }
     }
@@ -403,9 +401,10 @@ public:
      * @brief Apply the policy
      */
     action apply(const state &s) override {
+        reference_time = s.t;
         tmp_dnode root(s);
         build_tree(root);
-        update_estimate_histories(root,root.s.t);
+        update_eh(&root);
         return recommended_action(root);
     }
 

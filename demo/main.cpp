@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <random>
 #include <vector>
@@ -56,7 +57,7 @@ void run(
 }
 
 /**
- * @brief Simple run for display
+ * @brief Single run
  */
 void single_run(char * n) {
     std::string path(n);
@@ -72,8 +73,11 @@ void generate_maps(char * n) {
     // Init
     std::string path(n);
     parameters p(path);
+    p.GENERATE_MAP = true;
+    p.SAVE_DURATION_MATRIX = true;
     // Build
-    for(unsigned i=0; i<5; ++i) {
+    for(unsigned i=0; i<100; ++i) {
+        std::cout << "build map " << i << std::endl;
         p.OUTPUT_DURATION_MATRIX = "config/map" + std::to_string(i) + ".cfg";
         environment en = p.build_environment();
     }
@@ -92,6 +96,7 @@ void test(char * n) {
         p.POLICY_SELECTOR = k;
         p.BACKUP_PATH = "data/backup" + std::to_string(p.POLICY_SELECTOR) + ".csv";
         for(unsigned m=0; m<5; ++m) {
+            std::cout << "Policy " << k << " map " << m << std::endl;
             p.INPUT_DURATION_MATRIX = "config/backup/map" + std::to_string(m) + ".csv";
             // Simulate
             for(unsigned i=0; i<p.NB_SIMULATIONS; ++i) {
@@ -113,9 +118,9 @@ int main(int argc, char ** argv) {
         srand(time(NULL));
 
         if(argc == 2) {
-            single_run(argv[1]);
+            //single_run(argv[1]);
             //test(argv[1]);
-            //generate_maps(argv[1]);
+            generate_maps(argv[1]);
         } else {
             std::cout << "No parameters\n";
         }

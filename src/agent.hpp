@@ -20,13 +20,11 @@ public:
      */
     agent(std::unique_ptr<policy> &_po, map_node *ptr) :
         po(std::move(_po)),
-        s(0,ptr),
-        s_p(0,ptr),
+        s(0.,ptr),
+        s_p(0.,ptr),
         a(""),
-        r(0)
-    {
-        //
-    }
+        r(0.)
+    {}
 
     void apply_policy() {
         a = po->apply(s);

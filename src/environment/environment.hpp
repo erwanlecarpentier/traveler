@@ -84,7 +84,8 @@ public:
         if(is_greater_than(duration,reward_scaling_max)) {
             return -1.;
         } else {
-            return 0.5 * (cos(3.1415926535897 * duration / reward_scaling_max) + 1) - 1.;
+            return 0.45 * (cos(3.1415926535897 * duration / reward_scaling_max ) + 1) - 1;
+            //return 0.5 * (cos(3.1415926535897 * duration / reward_scaling_max) - 1);
         }
     }
 

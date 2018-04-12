@@ -14,7 +14,7 @@ public:
     const estimates_history * eh_ptr;
     const state s; ///< Labelling state
     const action a; ///< Labelling action
-    const double t_ref;
+    const double reference_time; ///< Time at the root node when the node was created
     const double regression_regularization;
     const unsigned polynomial_regression_degree;
     const double depth; ///< Depth
@@ -25,17 +25,17 @@ public:
      * @brief Constructor
      */
     tmp_cnode(
-        estimates_history * _eh_ptr,
-        state _s,
-        action _a,
-        double _t_ref,
+        const estimates_history * _eh_ptr,
+        const state &_s,
+        const action &_a,
+        double _reference_time,
         double _regression_regularization,
         unsigned _polynomial_regression_degree,
         double _depth = 0) :
         eh_ptr(_eh_ptr),
         s(_s),
         a(_a),
-        t_ref(_t_ref),
+        reference_time(_reference_time),
         regression_regularization(_regression_regularization),
         polynomial_regression_degree(_polynomial_regression_degree),
         depth(_depth)
@@ -74,9 +74,9 @@ public:
     }
 
     double polynomial_value_prediction() const {
-        std::vector<double> x = {s.t - t_ref};
+        std::vector<double> x = {s.t - reference_time};
         std::vector<double> y = {get_sampled_returns_mean()};
-        for(auto & e : eh_ptr->hist) {
+        for(auto &e : eh_ptr->hist) {
             x.push_back(e.t_node - e.t_root);
             y.push_back(e.value);
         }
@@ -94,21 +94,10 @@ public:
      * @brief Get the value estimate
      */
     double get_value() const {
-        if((eh_ptr == nullptr) || eh_ptr->is_history_empty()) {
+        if(eh_ptr == nullptr) {
             return get_sampled_returns_mean();
         } else {
-            //TODO switch here
-            /*
-            std::cout << std::endl;//TODO remove
-            std::cout << "is nullptr       : " << (eh_ptr == nullptr) << std::endl;
-            std::cout << "is_history_empty : " << eh_ptr->is_history_empty() << std::endl;
-            std::cout << "size             : " << eh_ptr->hist.size() << std::endl;
-            std::cout << "size < 100       : " << (eh_ptr->hist.size() < 100) << std::endl;
-            std::cout << "location         : " << eh_ptr->location << std::endl;
-            std::cout << "direction        : " << eh_ptr->direction << std::endl;
-            */
-            return get_sampled_returns_mean();//TODO remove and put next
-            //return polynomial_value_prediction();
+            return polynomial_value_prediction();
         }
     }
 };

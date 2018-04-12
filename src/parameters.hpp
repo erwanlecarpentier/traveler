@@ -21,7 +21,7 @@ public:
     unsigned SIMULATION_LIMIT_TIME;
     unsigned NB_SIMULATIONS;
     std::string CFG_PATH;
-    //std::string BACKUP_PATH;
+    std::string BACKUP_PATH;
 
     // Environment parameters
     double REWARD_SCALING_MAX;
@@ -43,7 +43,7 @@ public:
 
     std::string INITIAL_LOCATION;
     std::string TERMINAL_LOCATION;
-    std::string GRAPH_DURATION_MATRIX_PATH;
+    std::string INPUT_DURATION_MATRIX;
     std::string CSV_SEP;
 
     // Policy parameters
@@ -70,7 +70,7 @@ public:
         }
         if(cfg.lookupValue("simulation_limit_time",SIMULATION_LIMIT_TIME)
         && cfg.lookupValue("nb_simulations",NB_SIMULATIONS)
-        //&& cfg.lookupValue("backup_path",BACKUP_PATH)
+        && cfg.lookupValue("backup_path",BACKUP_PATH)
         && cfg.lookupValue("reward_scaling_max",REWARD_SCALING_MAX)
         && cfg.lookupValue("goal_reward",GOAL_REWARD)
         && cfg.lookupValue("dead_end_reward",DEAD_END_REWARD)
@@ -88,7 +88,7 @@ public:
         && cfg.lookupValue("output_duration_matrix",OUTPUT_DURATION_MATRIX)
         && cfg.lookupValue("initial_location",INITIAL_LOCATION)
         && cfg.lookupValue("terminal_location",TERMINAL_LOCATION)
-        && cfg.lookupValue("graph_duration_matrix_path",GRAPH_DURATION_MATRIX_PATH)
+        && cfg.lookupValue("input_duration_matrix",INPUT_DURATION_MATRIX)
         && cfg.lookupValue("csv_sep",CSV_SEP)
         && cfg.lookupValue("policy_selector",POLICY_SELECTOR)
         && cfg.lookupValue("is_model_dynamic",IS_MODEL_DYNAMIC)
@@ -105,7 +105,7 @@ public:
         }
     }
 
-    //TODO
+    /* @deprecated
     std::string get_backup_path_from_parameters_path() {
         std::string bp = "data/";
         bool copy_name = false;
@@ -122,6 +122,7 @@ public:
         bp += "_backup.csv";
         return bp;
     }
+    */
 
     /**
      * @brief Display libconfig ParseException
@@ -140,10 +141,7 @@ public:
      */
     agent build_agent(environment &en) const {
         auto po = build_policy(en);
-        return agent(
-            po,
-            en.find_node_by_name(INITIAL_LOCATION)
-        );
+        return agent(po,en.find_node_by_name(INITIAL_LOCATION));
     }
 
     /**
@@ -196,6 +194,11 @@ public:
 
     /**
      * @brief Environment builder
+     *
+     * Build the environment according to the parameters of the configuration file.
+     * If GENERATE_MAP is true, a map is generated.
+     * If SAVE_DURATION_MATRIX is true, the map is saved at the given output path.
+     * If GENERATE_MAP is false, the map at the given input path is used.
      */
     environment build_environment() const {
         map_builder mb(
@@ -208,7 +211,7 @@ public:
             INITIAL_DURATION_MAX,
             DURATION_VARIATION_MAX,
             TERMINAL_LOCATION,
-            GRAPH_DURATION_MATRIX_PATH,
+            INPUT_DURATION_MATRIX,
             CSV_SEP
         );
         std::vector<std::vector<std::string>> dm;

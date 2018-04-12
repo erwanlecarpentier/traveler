@@ -3,14 +3,18 @@
 
 class map_node {
 public:
-    std::string name;
+    const std::string name;
+    const bool is_goal;
+
     std::vector<map_node*> edges;
     std::vector<std::vector<unsigned>> edges_costs;
-    bool is_goal;
 
-    map_node(std::string _name, bool _is_goal) : name(_name), is_goal(_is_goal) {
-        //
-    }
+    map_node(
+        const std::string &_name,
+        bool _is_goal) :
+        name(_name),
+        is_goal(_is_goal)
+    {}
 
     void print() const {
         std::cout << "Map node - ";

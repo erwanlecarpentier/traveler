@@ -40,8 +40,8 @@ public:
      * Constructor adding one element to the history.
      */
     estimates_history(
-        std::string _location,
-        std::string _direction,
+        const std::string &_location,
+        const std::string &_direction,
         double _t_root,
         double _t_node,
         double _value) :
@@ -50,6 +50,8 @@ public:
     {
         add_estimate(_t_root,_t_node,_value);
     }
+
+    estimates_history() {}
 
     /**
      * @brief Add estimate
