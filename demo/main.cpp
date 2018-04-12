@@ -83,33 +83,42 @@ void generate_maps(char * n) {
     }
 }
 
+std::string get_p_path(const char * param_id) {
+    std::string pid(param_id);
+    return "config/backup/parameters" + pid + ".cfg";
+}
+
+std::string get_m_path(const char * map_id) {
+    std::string mid(map_id);
+    return "config/backup/maps/map" + mid + ".csv";
+}
+
+std::string get_b_path(const char * param_id, const char * map_id) {
+    std::string pid(param_id);
+    std::string mid(map_id);
+   return "data/svg" + pid + "_" + mid + ".csv";
+}
+
 /**
  * @brief Test function
  */
-void test(char * n) {
+void test(const char * param_id, const char * map_id) {
     // Init
-    std::string path(n);
-    parameters p(path);
-    std::vector<unsigned> policies = {0,2,4};
-    for(auto k : policies) {
-        std::vector<std::vector<double>> backup_vector;
-        p.POLICY_SELECTOR = k;
-        p.BACKUP_PATH = "data/backup" + std::to_string(p.POLICY_SELECTOR) + ".csv";
-        for(unsigned m=0; m<5; ++m) {
-            std::cout << "Policy " << k << " map " << m << std::endl;
-            p.INPUT_DURATION_MATRIX = "config/backup/map" + std::to_string(m) + ".csv";
-            // Simulate
-            for(unsigned i=0; i<p.NB_SIMULATIONS; ++i) {
-                run(p,false,true,backup_vector);
-            }
-            // Save
-            save_csv(
-                std::vector<std::string>{"elapsed_time","total_return"},
-                backup_vector,
-                p.BACKUP_PATH
-            );
-        }
+    std::string parameters_path = get_p_path(param_id);
+    parameters p(parameters_path);
+    p.BACKUP_PATH = get_b_path(param_id,map_id);
+    p.INPUT_DURATION_MATRIX = get_m_path(map_id);
+    std::vector<std::vector<double>> backup_vector;
+    // Run
+    for(unsigned i=0; i<p.NB_SIMULATIONS; ++i) {
+        run(p,false,true,backup_vector);
     }
+    // Save
+    save_csv(
+        std::vector<std::string>{"elapsed_time","total_return"},
+        backup_vector,
+        p.BACKUP_PATH
+    );
 }
 
 int main(int argc, char ** argv) {
@@ -117,10 +126,10 @@ int main(int argc, char ** argv) {
         std::clock_t c_start = std::clock();
         srand(time(NULL));
 
-        if(argc == 2) {
+        if(argc > 1) {
             //single_run(argv[1]);
-            //test(argv[1]);
-            generate_maps(argv[1]);
+            test(argv[1],argv[2]);
+            //generate_maps(argv[1]);
         } else {
             std::cout << "No parameters\n";
         }

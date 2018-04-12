@@ -105,25 +105,6 @@ public:
         }
     }
 
-    /* @deprecated
-    std::string get_backup_path_from_parameters_path() {
-        std::string bp = "data/";
-        bool copy_name = false;
-        for(unsigned i=0; i<CFG_PATH.size(); ++i) {
-            if(CFG_PATH.at(i) == '.') {
-                break;
-            }
-            if(copy_name) {
-                bp.push_back(CFG_PATH.at(i));
-            } else if(CFG_PATH.at(i) == '/') {
-                copy_name = true;
-            }
-        }
-        bp += "_backup.csv";
-        return bp;
-    }
-    */
-
     /**
      * @brief Display libconfig ParseException
      *
