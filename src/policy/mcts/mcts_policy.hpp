@@ -10,14 +10,15 @@
 class mcts_policy : public policy {
 public:
     random_policy default_policy; ///< Default policy
-    environment * envt_ptr; ///< Generative model (pointer to the real environment)
-    bool is_model_dynamic; ///< Is the model dynamic
-    double discount_factor; ///< Discount factor
-    double uct_parameter; ///< UCT parameter
-    unsigned budget; ///< Budget ie number of expanded nodes in the tree
-    unsigned horizon; ///< Horizon for the default policy simulation
-    unsigned mcts_strategy_switch; ///< Strategy switch for MCTS algorithm
+    const environment * envt_ptr; ///< Generative model (pointer to the real environment)
+    const bool is_model_dynamic; ///< Is the model dynamic
+    const double discount_factor; ///< Discount factor
+    const double uct_parameter; ///< UCT parameter
+    const unsigned budget; ///< Budget ie number of expanded nodes in the tree
+    const unsigned horizon; ///< Horizon for the default policy simulation
+    const unsigned mcts_strategy_switch; ///< Strategy switch for MCTS algorithm
 
+    double reference_time; ///< Initial time of the state at which the policy is applied
     unsigned nb_calls; ///< Number of calls to the generative model
     unsigned nb_cnodes; ///< Number of expanded chance nodes
 
@@ -44,18 +45,25 @@ public:
         nb_cnodes = 0;
     }
 
+    /**
+     * @brief Generative model
+     *
+     * Generative model computing a transition of the environment.
+     * If is_model_dynamic is true, the time of the transition corresponds to the state of the
+     * transition.
+     * Else, the time of the transition corresponds to the root node's state time.
+     */
     void generative_model(
         const state &s,
         const action &a,
         double &r,
-        state &s_p,
-        double t_ref)
+        state &s_p)
     {
         ++nb_calls;
         if(is_model_dynamic) {
             envt_ptr->transition(s,s.t,a,r,s_p);
         } else {
-            envt_ptr->transition(s,t_ref,a,r,s_p);
+            envt_ptr->transition(s,reference_time,a,r,s_p);
         }
     }
 
@@ -66,7 +74,7 @@ public:
      * @param {state} s; input state
      * @return Return the sampled return.
      */
-    double sample_return(cnode * ptr, double t_ref) {
+    double sample_return(cnode * ptr) {
         if(envt_ptr->is_state_terminal(ptr->s)) {
             return envt_ptr->get_terminal_reward(ptr->s);
         }
@@ -76,7 +84,7 @@ public:
         for(unsigned t=0; t<horizon; ++t) {
             state s_p;
             double r = 0.;
-            generative_model(s,a,r,s_p,t_ref);
+            generative_model(s,a,r,s_p);
             total_return += pow(discount_factor,(double)t) * r;
             if(envt_ptr->is_state_terminal(s_p)) {
                 break;
@@ -171,10 +179,10 @@ public:
      * @param {dnode *} v; pointer to the decision node
      * @return Return the sampled value.
      */
-    double evaluate(dnode * v, double t_ref) {
+    double evaluate(dnode * v) {
         nb_cnodes++; // a chance node will be created
         v->create_child();
-        double q = sample_return(v->children.back().get(),t_ref);
+        double q = sample_return(v->children.back().get());
         update_value(v->children.back().get(),q);
         return q;
     }
@@ -207,25 +215,25 @@ public:
      * @param {double} t_root; time reference of the root node
      * @return Return the sampled return at the given decision node
      */
-    double search_tree(dnode * v, double t_root) {
+    double search_tree(dnode * v) {
         if(envt_ptr->is_state_terminal(v->s)) { // terminal node
             return envt_ptr->get_terminal_reward(v->s);
         } else if(!v->is_fully_expanded()) { // leaf node, expand it
-            return evaluate(v,t_root);
+            return evaluate(v);
         } else { // apply tree policy
             cnode * ptr = select_child(v);
             state s_p;
             double r = 0.;
-            generative_model(v->s,ptr->a,r,s_p,t_root);
+            generative_model(v->s,ptr->a,r,s_p);
             double q = 0.;
             unsigned ind = 0; // indice of resulting child
             if(is_state_already_sampled(ptr,s_p,ind)) { // go to node
-                q = r + discount_factor * search_tree(ptr->children.at(ind).get(),t_root);
+                q = r + discount_factor * search_tree(ptr->children.at(ind).get());
             } else { // leaf node, create a new node
                 ptr->children.emplace_back(std::unique_ptr<dnode>(
                     new dnode(s_p,ptr->depth+1)
                 ));
-                q = r + discount_factor * evaluate(ptr->get_last_child(),t_root);
+                q = r + discount_factor * evaluate(ptr->get_last_child());
             }
             update_value(ptr,q);
             return q;
@@ -240,7 +248,7 @@ public:
      */
     void build_tree(dnode &v) {
         for(unsigned i=0; i<budget; ++i) {
-            search_tree(&v,v.s.t);
+            search_tree(&v);
         }
         nb_cnodes = 0;
     }
@@ -309,7 +317,11 @@ public:
         std::cout << std::endl;
     }
 
+    /**
+     * @brief Apply the policy
+     */
     action apply(const state &s) override {
+        reference_time = s.t;
         dnode root(s);
         build_tree(root);
         return recommended_action(root);

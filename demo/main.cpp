@@ -77,6 +77,7 @@ int main(int argc, char ** argv) {
         srand(time(NULL));
         if(argc > 1) {
             single_run(argv[1]);
+            //test(argv[1],run);
         } else {
             throw no_parameters_path_exception();
         }
