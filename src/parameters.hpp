@@ -35,9 +35,9 @@ public:
     unsigned TIME_STEPS_WIDTH;
     unsigned NB_NODES;
     unsigned MIN_NB_EDGES_PER_NODE;
-    double INITIAL_DURATION_MIN;
-    double INITIAL_DURATION_MAX;
-    double DURATION_VARIATION_MAX;
+    double DURATION_MIN;
+    double DURATION_MAX;
+    double LIP;
     bool SAVE_DURATION_MATRIX;
     std::string OUTPUT_DURATION_MATRIX;
 
@@ -81,9 +81,9 @@ public:
         && cfg.lookupValue("time_steps_width",TIME_STEPS_WIDTH)
         && cfg.lookupValue("nb_nodes",NB_NODES)
         && cfg.lookupValue("min_nb_edges_per_node",MIN_NB_EDGES_PER_NODE)
-        && cfg.lookupValue("initial_duration_min",INITIAL_DURATION_MIN)
-        && cfg.lookupValue("initial_duration_max",INITIAL_DURATION_MAX)
-        && cfg.lookupValue("duration_variation_max",DURATION_VARIATION_MAX)
+        && cfg.lookupValue("duration_min",DURATION_MIN)
+        && cfg.lookupValue("duration_max",DURATION_MAX)
+        && cfg.lookupValue("lip",LIP)
         && cfg.lookupValue("save_duration_matrix",SAVE_DURATION_MATRIX)
         && cfg.lookupValue("output_duration_matrix",OUTPUT_DURATION_MATRIX)
         && cfg.lookupValue("initial_location",INITIAL_LOCATION)
@@ -188,9 +188,9 @@ public:
             TIME_STEPS_WIDTH,
             NB_NODES,
             MIN_NB_EDGES_PER_NODE,
-            INITIAL_DURATION_MIN,
-            INITIAL_DURATION_MAX,
-            DURATION_VARIATION_MAX,
+            DURATION_MIN,
+            DURATION_MAX,
+            LIP,
             TERMINAL_LOCATION,
             INPUT_DURATION_MATRIX,
             CSV_SEP
@@ -208,7 +208,7 @@ public:
         } else {
             dm = mb.extract_duration_matrix();
         }
-        std::vector<unsigned> ts;
+        std::vector<double> ts;
         std::vector<map_node> nv;
         mb.build_time_scale_and_map_from_duration_matrix(dm,ts,nv);
         return environment(REWARD_SCALING_MAX,GOAL_REWARD,DEAD_END_REWARD,ts,nv);

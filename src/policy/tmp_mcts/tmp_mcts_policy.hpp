@@ -59,8 +59,8 @@ public:
      * @brief Generative model
      *
      * Generative model computing a transition of the environment.
-     * If is_model_dynamic is true, the time of the transition corresponds to the state of the
-     * transition.
+     * If is_model_dynamic is true, the time of the transition corresponds to the state
+     * of the transition.
      * Else, the time of the transition corresponds to the root node's state time.
      */
     void generative_model(

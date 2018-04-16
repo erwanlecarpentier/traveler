@@ -6,10 +6,10 @@
 
 class environment {
 public:
-    double reward_scaling_max;
-    double goal_reward;
-    double dead_end_reward;
-    std::vector<unsigned> time_scale;
+    const double reward_scaling_max;
+    const double goal_reward;
+    const double dead_end_reward;
+    const std::vector<double> time_scale;
     std::vector<map_node> nodes_vector;
 
     /**
@@ -19,7 +19,7 @@ public:
         double _reward_scaling_max,
         double _goal_reward,
         double _dead_end_reward,
-        std::vector<unsigned> &_time_scale,
+        std::vector<double> &_time_scale,
         std::vector<map_node> &_nodes_vector) :
         reward_scaling_max(_reward_scaling_max),
         goal_reward(_goal_reward),
@@ -79,6 +79,11 @@ public:
         }
     }
 
+    /**
+     * @brief Reward from duration
+     *
+     * Compute the reward associated to the input travel duration.
+     */
     double reward_from_duration(double duration) const {
         assert(!is_less_than(duration,0.));
         if(is_greater_than(duration,reward_scaling_max)) {
@@ -105,7 +110,7 @@ public:
      * direct lower element and the direct higher element.
      */
     std::tuple<unsigned,unsigned> get_uplow_indices(double t) const {
-        std::vector<unsigned>::const_iterator up = std::upper_bound(time_scale.begin(), time_scale.end(), t);
+        std::vector<double>::const_iterator up = std::upper_bound(time_scale.begin(), time_scale.end(), t);
         unsigned upind = up - time_scale.begin();
         if(upind == 0) {
             return std::make_tuple(0,0);
@@ -123,17 +128,17 @@ public:
      * @param {unsigned} su_ind; indice of the successor in node->edges
      * @return Return the duration as a double.
      */
-    double get_time_to_successor(
+    double get_duration_until_successor(
         const state &s,
         double t_request,
         unsigned su_ind) const
     {
         std::tuple<unsigned,unsigned> ti_ind = get_uplow_indices(t_request);
-        std::vector<unsigned> c = s.nd_ptr->edges_costs.at(su_ind);
+        std::vector<double> c = s.nd_ptr->edges_costs.at(su_ind);
         double c_m, c_p = c.at(std::get<1>(ti_ind));
         double t_m, t_p = time_scale.at(std::get<1>(ti_ind));
         if(std::get<0>(ti_ind) == std::get<1>(ti_ind)) {
-            //std::cout << "Warning, max range of duration matrix reached.\n";
+            //std::cout << "Warning, maximum range of duration matrix reached.\n";
             c_m = c.at(std::get<0>(ti_ind) - 1);
             t_m = time_scale.at(std::get<0>(ti_ind) - 1);
         } else {
@@ -142,9 +147,10 @@ public:
         }
         double duration = ((c_p - c_m) / (t_p - t_m)) * t_request + (c_m * t_p - c_p * t_m) / (t_p - t_m);
         if(is_less_than(duration,0.)) {
-            duration = 0.;
+            return 0.;
+        } else {
+            return duration;
         }
-        return duration;
     }
 
     /**
@@ -152,14 +158,14 @@ public:
      */
     void transition(
         const state &s,
-        double t,
+        double t_request,
         const action &a,
         double &r,
         state &s_p) const
     {
         unsigned indice = 0;
         if(is_action_valid(s,a,indice)) { // Go to edge
-            double duration = get_time_to_successor(s,t,indice);
+            double duration = get_duration_until_successor(s,t_request,indice);
             s_p = state(
                 s.t + duration,
                 s.get_ptr_to_successor(indice)
@@ -186,7 +192,7 @@ public:
     /**
      * @brief Print
      */
-    void print_environment() {
+    void print_environment() const {
         std::cout << "Printing map graph:\nNodes:\n";
         for(auto &nd : nodes_vector) {
             std::cout << " - " << nd.name << std::endl;

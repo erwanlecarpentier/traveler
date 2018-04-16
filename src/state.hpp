@@ -10,9 +10,9 @@ public:
     double t; ///< time
     map_node * nd_ptr; ///< location in the graph
 
-    state() {}
+    state() : t(0.) {}
 
-    state(unsigned _t, map_node * _nd_ptr) : t(_t), nd_ptr(_nd_ptr) {}
+    state(double _t, map_node * _nd_ptr) : t(_t), nd_ptr(_nd_ptr) {}
 
     std::string get_name() const {
         return nd_ptr->name;

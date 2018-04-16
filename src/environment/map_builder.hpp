@@ -9,9 +9,9 @@ public:
     unsigned time_steps_width;
     unsigned nb_nodes;
     unsigned min_nb_edges_per_node;
-    double initial_duration_min;
-    double initial_duration_max;
-    double duration_variation_max;
+    double duration_min;
+    double duration_max;
+    double lip;
 
     // Parameters for imported map
     std::string terminal_location;
@@ -24,9 +24,9 @@ public:
         unsigned _time_steps_width,
         unsigned _nb_nodes,
         unsigned _min_nb_edges_per_node,
-        double _initial_duration_min,
-        double _initial_duration_max,
-        double _duration_variation_max,
+        double _duration_min,
+        double _duration_max,
+        double _lip,
         std::string _terminal_location,
         std::string _input_duration_matrix,
         std::string _csv_sep) :
@@ -35,42 +35,87 @@ public:
         time_steps_width(_time_steps_width),
         nb_nodes(_nb_nodes),
         min_nb_edges_per_node(_min_nb_edges_per_node),
-        initial_duration_min(_initial_duration_min),
-        initial_duration_max(_initial_duration_max),
-        duration_variation_max(_duration_variation_max),
+        duration_min(_duration_min),
+        duration_max(_duration_max),
+        lip(_lip),
         terminal_location(_terminal_location),
         input_duration_matrix(_input_duration_matrix),
         csv_sep(_csv_sep)
     {}
 
     void bound_variation(double &v) const {
-        if(is_less_than(v,-duration_variation_max)) {
-            v = -duration_variation_max;
-        } else if (is_greater_than(v,duration_variation_max)) {
-            v = +duration_variation_max;
+        if(is_less_than(v,-lip)) {
+            v = -lip;
+        } else if (is_greater_than(v,lip)) {
+            v = +lip;
         }
     }
 
     void first_order_random_uniform(std::vector<double> &vec, double &v) const {
         vec.push_back(vec.back() + v);
-        v = uniform_double(-duration_variation_max,duration_variation_max);
+        v = uniform_double(-lip,lip);
     }
 
     void secnd_order_random_uniform(std::vector<double> &vec, double &v) const {
         vec.push_back(vec.back() + v);
-        v += uniform_double(-duration_variation_max / 2.,duration_variation_max / 2.);
+        v += uniform_double(-lip / 2.,lip / 2.);
         bound_variation(v);
     }
 
     void secnd_order_epsilon_random_uniform(std::vector<double> &vec, double &v) const {
         vec.push_back(vec.back() + v);
         if(is_less_than(uniform_double(0.,1.),0.5)) {
-            v += uniform_double(-duration_variation_max / 2.,duration_variation_max / 2.);
+            v += uniform_double(-lip / 2.,lip / 2.);
         }
         if(is_less_than(uniform_double(0.,1.),0.1)) {
             v = -v;
         }
         bound_variation(v);
+    }
+
+    void const_fun(std::vector<double> &v, unsigned length) const {
+        double cs = v.back();
+        for(unsigned i=0; i<length; ++i) {
+            v.emplace_back(cs);
+        }
+    }
+
+    void bound(double &value) const {
+        if(is_less_than(value,duration_min)) {
+            value = duration_min;
+        } else if(is_greater_than(value,duration_max)) {
+            value = duration_max;
+        }
+    }
+
+    void cos_fun(std::vector<double> &v, unsigned length) const {
+        double mag = ((double)length) * lip;
+        double increment = uniform_double(-mag,mag);
+        double x = 0.;
+        double cs = v.back();
+        for(unsigned i=0; i<length; ++i) {
+            double new_value = cs + (increment / 2.) * (1. - cos(x * 3.14159265359 / ((double) length)));
+            v.push_back(new_value);
+            x += 1.;
+        }
+    }
+
+    std::vector<double> cos_heuristic() const {
+        std::vector<double> v = {
+            uniform_double(duration_min,duration_max)
+        };
+        unsigned min_length = ((unsigned) nb_time_steps / 20.);
+        unsigned max_length = ((unsigned) nb_time_steps / 3.0);
+        while(v.size() < nb_time_steps) {
+            unsigned length = uniform_integer(min_length,max_length);
+            if(uniform_integer(0,2) == 0) {
+                const_fun(v,length);
+            } else {
+                cos_fun(v,length);
+            }
+        }
+        v.resize(nb_time_steps+1);
+        return v;
     }
 
     /**
@@ -107,17 +152,21 @@ public:
      * at each time step.
      */
     std::vector<double> sample_durations() const {
-        std::vector<double> vec = {
-            uniform_double(initial_duration_min,initial_duration_max)
-        };
-        double v = uniform_double(-duration_variation_max,duration_variation_max);
-        for(unsigned j=0; j<nb_time_steps; ++j) {
-            append_duration(vec,v);
-            if(is_less_than(vec.back(),0.)) {
-                vec.back() = 0.;
+        if(sampler_selector == 3) { // case 3
+            return cos_heuristic();
+        } else { // cases 0 1 2 or default
+            std::vector<double> vec = {
+                uniform_double(duration_min,duration_max)
+            };
+            double v = uniform_double(-lip,lip);
+            for(unsigned j=0; j<nb_time_steps; ++j) {
+                append_duration(vec,v);
+                if(is_less_than(vec.back(),0.)) {
+                    vec.back() = 0.;
+                }
             }
+            return vec;
         }
-        return vec;
     }
 
     /**
@@ -316,13 +365,13 @@ public:
     /**
      * @brief Get durations
      */
-    std::vector<unsigned> get_durations(
+    std::vector<double> get_durations(
         unsigned i,
         const std::vector<std::vector<std::string>> &dm) const
     {
-        std::vector<unsigned> v;
+        std::vector<double> v;
         for(unsigned j=2; j<dm.at(i).size(); ++j) {
-            v.push_back(std::stoul(dm.at(i).at(j),nullptr,0));
+            v.push_back(std::stod(dm.at(i).at(j)));
         }
         return v;
     }
@@ -332,13 +381,13 @@ public:
      */
     void build_time_scale_and_map_from_duration_matrix(
         const std::vector<std::vector<std::string>> &dm,
-        std::vector<unsigned> &ts,
+        std::vector<double> &ts,
         std::vector<map_node> &nv) const
     {
         // 0. Extract time scale
-        unsigned tref = std::stoul(dm.at(0).at(2));
+        double tref = std::stod(dm.at(0).at(2));
         for(unsigned j=2; j<dm.at(0).size(); ++j) {
-            ts.push_back(std::stoul(dm.at(0).at(j)) - tref);
+            ts.push_back(std::stod(dm.at(0).at(j)) - tref);
         }
         // 1. Create nodes and assign termination criterion
         for(unsigned i=1; i<dm.size(); ++i) {

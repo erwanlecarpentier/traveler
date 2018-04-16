@@ -7,7 +7,7 @@ public:
     const bool is_goal;
 
     std::vector<map_node*> edges;
-    std::vector<std::vector<unsigned>> edges_costs;
+    std::vector<std::vector<double>> edges_costs;
 
     map_node(
         const std::string &_name,
