@@ -43,11 +43,29 @@ public:
         csv_sep(_csv_sep)
     {}
 
+    /**
+     * @brief Bound variation
+     *
+     * Bound the variation of the duration between two subsequent time steps.
+     */
     void bound_variation(double &v) const {
         if(is_less_than(v,-lip)) {
             v = -lip;
         } else if (is_greater_than(v,lip)) {
             v = +lip;
+        }
+    }
+
+    /**
+     * @brief Bound variation
+     *
+     * Bound the value of the duration between max and min values set as attributes.
+     */
+    void bound_value(double &value) const {
+        if(is_less_than(value,duration_min)) {
+            value = duration_min;
+        } else if(is_greater_than(value,duration_max)) {
+            value = duration_max;
         }
     }
 
@@ -80,14 +98,6 @@ public:
         }
     }
 
-    void bound(double &value) const {
-        if(is_less_than(value,duration_min)) {
-            value = duration_min;
-        } else if(is_greater_than(value,duration_max)) {
-            value = duration_max;
-        }
-    }
-
     void cos_fun(std::vector<double> &v, unsigned length) const {
         double mag = ((double)length) * lip;
         double increment = uniform_double(-mag,mag);
@@ -95,6 +105,7 @@ public:
         double cs = v.back();
         for(unsigned i=0; i<length; ++i) {
             double new_value = cs + (increment / 2.) * (1. - cos(x * 3.14159265359 / ((double) length)));
+            bound_value(new_value);
             v.push_back(new_value);
             x += 1.;
         }
@@ -104,8 +115,8 @@ public:
         std::vector<double> v = {
             uniform_double(duration_min,duration_max)
         };
-        unsigned min_length = ((unsigned) nb_time_steps / 20.);
-        unsigned max_length = ((unsigned) nb_time_steps / 3.0);
+        unsigned min_length = 2;//((unsigned) nb_time_steps / 100.);
+        unsigned max_length = 50;//((unsigned) nb_time_steps / 8.0);
         while(v.size() < nb_time_steps) {
             unsigned length = uniform_integer(min_length,max_length);
             if(uniform_integer(0,2) == 0) {
@@ -170,16 +181,33 @@ public:
     }
 
     /**
-     * @brief Create random edge
+     * @brief Write time scale
+     *
+     * Write the time scale ie first line of a duration matrix in the corresponding format.
      */
-    std::vector<std::string> create_random_edge(
-        unsigned orig_ind,
-        unsigned dest_ind,
-        const std::vector<std::string> &nodes_names) const
+    std::vector<std::string> write_time_scale() const {
+        std::vector<std::string> first_line;
+        first_line.push_back("start");
+        first_line.push_back("goal");
+        for(unsigned i=0; i<nb_time_steps+1; ++i) {
+            first_line.push_back(std::to_string(i * time_steps_width));
+        }
+        return first_line;
+    }
+
+    /**
+     * @brief Write random edge
+     *
+     * Write a line containing the names of the starting node of the edge; the ending node
+     * of the edge; and the durations for each on of the time scale components.
+     */
+    std::vector<std::string> write_random_edge(
+        const std::string &orig_node_name,
+        const std::string &dest_node_name) const
     {
         std::vector<std::string> new_line;
-        new_line.push_back(nodes_names.at(orig_ind));
-        new_line.push_back(nodes_names.at(dest_ind));
+        new_line.push_back(orig_node_name);
+        new_line.push_back(dest_node_name);
         std::vector<double> durations = sample_durations();
         for(auto &d : durations) {
             new_line.push_back(std::to_string(d));
@@ -189,17 +217,13 @@ public:
 
     /**
      * @brief Build a random connected directed duration matrix
+     *
+     * @return Return the duration matrix.
      */
     std::vector<std::vector<std::string>> build_random_connected_directed_duration_matrix() const {
         std::vector<std::vector<std::string>> dm;
         // 0. time scale
-        std::vector<std::string> first_line;
-        first_line.push_back("start");
-        first_line.push_back("goal");
-        for(unsigned i=0; i<nb_time_steps+1; ++i) {
-            first_line.push_back(std::to_string(i * time_steps_width));
-        }
-        dm.push_back(first_line);
+        dm.push_back(write_time_scale());
         // 1. Nodes
         std::vector<std::string> nodes_names;
         for(unsigned i=0; i<nb_nodes; ++i) {
@@ -212,10 +236,10 @@ public:
                 while(dest_ind == i) {
                     dest_ind = rand_indice(nodes_names);
                 }
-                dm.push_back(create_random_edge(i,dest_ind,nodes_names));
+                dm.push_back(write_random_edge(nodes_names.at(i),nodes_names.at(dest_ind)));
             }
         }
-        // 2. Additional edges for non-reachable nodes
+        // 3. Additional edges for non-reachable nodes
         for(unsigned i=0; i<nb_nodes; ++i) {
             bool is_reachable = false;
             for(unsigned k=1; k<dm.size(); ++k) {
@@ -229,7 +253,7 @@ public:
                 while(orig_ind == i) {
                     orig_ind = rand_indice(nodes_names);
                 }
-                dm.push_back(create_random_edge(orig_ind,i,nodes_names));
+                dm.push_back(write_random_edge(nodes_names.at(orig_ind),nodes_names.at(i)));
             }
         }
         return dm;
@@ -259,17 +283,13 @@ public:
 
     /**
      * @brief Build a random connected symmetric directed duration matrix
+     *
+     * @return Return the duration matrix.
      */
     std::vector<std::vector<std::string>> build_random_connected_symmetric_directed_duration_matrix() const {
         std::vector<std::vector<std::string>> dm;
         // 0. time scale
-        std::vector<std::string> first_line;
-        first_line.push_back("start");
-        first_line.push_back("goal");
-        for(unsigned i=0; i<nb_time_steps+1; ++i) {
-            first_line.push_back(std::to_string(i * time_steps_width));
-        }
-        dm.push_back(first_line);
+        dm.push_back(write_time_scale());
         // 1. Build minimum of edges per node + the come-back edge
         std::vector<std::string> nodes_names;
         for(unsigned i=0; i<nb_nodes; ++i) {
@@ -285,10 +305,44 @@ public:
                 }
                 nodes_edges_counter.at(i)++;
                 nodes_edges_counter.at(dest_ind)++;
-                dm.push_back(create_random_edge(i,dest_ind,nodes_names));
-                dm.push_back(create_random_edge(dest_ind,i,nodes_names));
+                dm.push_back(write_random_edge(nodes_names.at(i),nodes_names.at(dest_ind)));
+                dm.push_back(write_random_edge(nodes_names.at(dest_ind),nodes_names.at(i)));
             }
         }
+        return dm;
+    }
+
+    /**
+     * @brief Build sequential duration matrix
+     *
+     * A sequential duration matrix is a matrix with several sequences of nodes linking
+     * the start to the goal.
+     * Sometimes some nodes of a sequence allow to jump to another link.
+     * @return Return the duration matrix.
+     */
+    std::vector<std::vector<std::string>> build_sequential_duration_matrix() const {
+        //TODO set those parameters in the parameters file
+        unsigned nb_links = 3;
+        unsigned nb_nodes_per_link = 5;
+
+        std::vector<std::vector<std::string>> dm;
+        // 0. time scale
+        dm.push_back(write_time_scale());
+        // 1. Create nodes
+        for(unsigned i=0; i<nb_links; ++i) {
+            for(unsigned j=0; i<nb_nodes_per_link; ++i) {
+                std::string dest_name = "n" + std::to_string(i) + "_" + std::to_string(j);
+                if(j == 0) {
+                    std::string orig_name = "n0";
+                    dm.push_back(write_random_edge(orig_name,dest_name));
+                } else {
+                    std::string orig_name = "n" + std::to_string(i) + "_" + std::to_string(j-1);
+                    dm.push_back(write_random_edge(orig_name,dest_name));
+                }
+            }
+        }
+        // 2. Create trans-connexions
+        //TODO
         return dm;
     }
 

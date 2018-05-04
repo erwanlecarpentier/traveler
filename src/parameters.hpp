@@ -18,6 +18,7 @@
 class parameters {
 public:
     // Simulation parameters
+    unsigned ID;
     unsigned SIMULATION_LIMIT_TIME;
     unsigned NB_SIMULATIONS;
     std::string CFG_PATH;
@@ -68,7 +69,8 @@ public:
         catch(const libconfig::ParseException &e) {
             display_libconfig_parse_exception(e);
         }
-        if(cfg.lookupValue("simulation_limit_time",SIMULATION_LIMIT_TIME)
+        if(cfg.lookupValue("id",ID)
+        && cfg.lookupValue("simulation_limit_time",SIMULATION_LIMIT_TIME)
         && cfg.lookupValue("nb_simulations",NB_SIMULATIONS)
         && cfg.lookupValue("backup_path",BACKUP_PATH)
         && cfg.lookupValue("reward_scaling_max",REWARD_SCALING_MAX)

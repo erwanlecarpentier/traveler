@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 #path = 'config/school_case.csv'
-path = 'config/backup/cos_heuristic_maps/map1.csv'
+path = 'config/map0.csv'
 
 # Extract
 with open(path) as f:
