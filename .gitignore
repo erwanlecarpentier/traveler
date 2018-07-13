@@ -1,0 +1,15 @@
+# Files
+exe
+*.sh
+demo/tests_backup.cpp
+demo/experiments.hpp
+config/school_case.csv
+
+# Repositories
+data
+outdated
+backup
+
+plot/stat.py
+plot/multi_stat.py
+plot/test.py

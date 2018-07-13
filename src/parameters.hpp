@@ -31,11 +31,13 @@ public:
     bool GENERATE_MAP;
 
     unsigned SAMPLER_SELECTOR;
-    bool SYMMETRIC_GRAPH;
+    unsigned GRAPH_TYPE_SELECTOR;
     unsigned NB_TIME_STEPS;
     unsigned TIME_STEPS_WIDTH;
     unsigned NB_NODES;
     unsigned MIN_NB_EDGES_PER_NODE;
+    unsigned NB_LINKS;
+    unsigned NB_NODES_PER_LINK;
     double DURATION_MIN;
     double DURATION_MAX;
     double LIP;
@@ -78,11 +80,13 @@ public:
         && cfg.lookupValue("dead_end_reward",DEAD_END_REWARD)
         && cfg.lookupValue("generate_map",GENERATE_MAP)
         && cfg.lookupValue("sampler_selector",SAMPLER_SELECTOR)
-        && cfg.lookupValue("symmetric_graph",SYMMETRIC_GRAPH)
+        && cfg.lookupValue("graph_type_selector",GRAPH_TYPE_SELECTOR)
         && cfg.lookupValue("nb_time_steps",NB_TIME_STEPS)
         && cfg.lookupValue("time_steps_width",TIME_STEPS_WIDTH)
         && cfg.lookupValue("nb_nodes",NB_NODES)
         && cfg.lookupValue("min_nb_edges_per_node",MIN_NB_EDGES_PER_NODE)
+        && cfg.lookupValue("nb_links",NB_LINKS)
+        && cfg.lookupValue("nb_nodes_per_link",NB_NODES_PER_LINK)
         && cfg.lookupValue("duration_min",DURATION_MIN)
         && cfg.lookupValue("duration_max",DURATION_MAX)
         && cfg.lookupValue("lip",LIP)
@@ -190,19 +194,34 @@ public:
             TIME_STEPS_WIDTH,
             NB_NODES,
             MIN_NB_EDGES_PER_NODE,
+            NB_LINKS,
+            NB_NODES_PER_LINK,
             DURATION_MIN,
             DURATION_MAX,
             LIP,
+            INITIAL_LOCATION,
             TERMINAL_LOCATION,
             INPUT_DURATION_MATRIX,
             CSV_SEP
         );
         std::vector<std::vector<std::string>> dm;
         if(GENERATE_MAP) {
-            if(SYMMETRIC_GRAPH) {
-                dm = mb.build_random_connected_symmetric_directed_duration_matrix();
-            } else {
-                dm = mb.build_random_connected_directed_duration_matrix();
+            switch(GRAPH_TYPE_SELECTOR) {
+                case 0: {
+                    dm = mb.build_connected_directed_duration_matrix();
+                    break;
+                }
+                case 1: {
+                    dm = mb.build_connected_symmetric_directed_duration_matrix();
+                    break;
+                }
+                case 2: {
+                    dm = mb.build_sequential_duration_matrix();
+                    break;
+                }
+                default: {
+                    dm = mb.build_connected_directed_duration_matrix();
+                }
             }
             if(SAVE_DURATION_MATRIX) {
                 mb.save_duration_matrix(dm,OUTPUT_DURATION_MATRIX);

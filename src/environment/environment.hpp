@@ -83,14 +83,17 @@ public:
      * @brief Reward from duration
      *
      * Compute the reward associated to the input travel duration.
+     * No reward associated to strictly negative durations
+     * Reward associated to duration zero is 1
+     * Reward associated to duration reward_scaling_max and above is 0
+     * Reward decays in a cos fashion between 0 and reward_scaling_max
      */
     double reward_from_duration(double duration) const {
         assert(!is_less_than(duration,0.));
         if(is_greater_than(duration,reward_scaling_max)) {
-            return -1.;
+            return 0;
         } else {
-            return 0.45 * (cos(3.1415926535897 * duration / reward_scaling_max ) + 1) - 1;
-            //return 0.5 * (cos(3.1415926535897 * duration / reward_scaling_max) - 1);
+            return 0.5 * (cos(3.1415926535897 * duration / reward_scaling_max) + 1);
         }
     }
 
@@ -99,9 +102,9 @@ public:
      */
     double reward_function(const state &st, double duration) const {
         if(is_state_terminal(st)) {
-            return reward_from_duration(duration) + get_terminal_reward(st);
+            return reward_from_duration(st.t) + get_terminal_reward(st);
         } else {
-            return reward_from_duration(duration);
+            return 0;//reward_from_duration(duration);
         }
     }
 

@@ -76,16 +76,16 @@ int main(int argc, char ** argv) {
         std::clock_t c_start = std::clock();
         srand(time(NULL));
         if(argc > 1) {
-            //single_run(argv[1]);
-            generate_maps(argv[1],1);
+            single_run(argv[1]);
+            //generate_maps(argv[1],1);
             //sequential_policies(argv[1],run);
-            parallel_policies(argv[1],run);
+            //parallel_policies(argv[1],run);
         } else {
             throw no_parameters_path_exception();
         }
         std::clock_t c_end = std::clock();
-        double time_elapsed_s = (c_end - c_start) / CLOCKS_PER_SEC;
-        std::cout << "Program run in " << time_elapsed_s << "s" << std::endl;
+        double time_elapsed_ms = 1e3 * (c_end - c_start) / CLOCKS_PER_SEC;
+        std::cout << "Program run in " << time_elapsed_ms << "ms" << std::endl;
     }
     catch(const std::exception &e) {
         std::cerr << "Error in main(): standard exception caught: " << e.what() << std::endl;

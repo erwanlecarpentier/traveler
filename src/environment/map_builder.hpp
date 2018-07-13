@@ -9,11 +9,14 @@ public:
     unsigned time_steps_width;
     unsigned nb_nodes;
     unsigned min_nb_edges_per_node;
+    unsigned nb_links;
+    unsigned nb_nodes_per_link;
     double duration_min;
     double duration_max;
     double lip;
 
     // Parameters for imported map
+    std::string initial_location;
     std::string terminal_location;
     std::string input_duration_matrix;
     std::string csv_sep;
@@ -24,9 +27,12 @@ public:
         unsigned _time_steps_width,
         unsigned _nb_nodes,
         unsigned _min_nb_edges_per_node,
+        unsigned _nb_links,
+        unsigned _nb_nodes_per_link,
         double _duration_min,
         double _duration_max,
         double _lip,
+        std::string _initial_location,
         std::string _terminal_location,
         std::string _input_duration_matrix,
         std::string _csv_sep) :
@@ -35,9 +41,12 @@ public:
         time_steps_width(_time_steps_width),
         nb_nodes(_nb_nodes),
         min_nb_edges_per_node(_min_nb_edges_per_node),
+        nb_links(_nb_links),
+        nb_nodes_per_link(_nb_nodes_per_link),
         duration_min(_duration_min),
         duration_max(_duration_max),
         lip(_lip),
+        initial_location(_initial_location),
         terminal_location(_terminal_location),
         input_duration_matrix(_input_duration_matrix),
         csv_sep(_csv_sep)
@@ -185,14 +194,14 @@ public:
      *
      * Write the time scale ie first line of a duration matrix in the corresponding format.
      */
-    std::vector<std::string> write_time_scale() const {
+    void write_time_scale(std::vector<std::vector<std::string>> &dm) const {
         std::vector<std::string> first_line;
         first_line.push_back("start");
         first_line.push_back("goal");
         for(unsigned i=0; i<nb_time_steps+1; ++i) {
             first_line.push_back(std::to_string(i * time_steps_width));
         }
-        return first_line;
+        dm.push_back(first_line);
     }
 
     /**
@@ -200,8 +209,10 @@ public:
      *
      * Write a line containing the names of the starting node of the edge; the ending node
      * of the edge; and the durations for each on of the time scale components.
+     * The line is pushed back to the input duration matrix.
      */
-    std::vector<std::string> write_random_edge(
+    void write_random_edge(
+        std::vector<std::vector<std::string>> &dm,
         const std::string &orig_node_name,
         const std::string &dest_node_name) const
     {
@@ -212,7 +223,7 @@ public:
         for(auto &d : durations) {
             new_line.push_back(std::to_string(d));
         }
-        return new_line;
+        dm.push_back(new_line);
     }
 
     /**
@@ -220,10 +231,10 @@ public:
      *
      * @return Return the duration matrix.
      */
-    std::vector<std::vector<std::string>> build_random_connected_directed_duration_matrix() const {
+    std::vector<std::vector<std::string>> build_connected_directed_duration_matrix() const {
         std::vector<std::vector<std::string>> dm;
         // 0. time scale
-        dm.push_back(write_time_scale());
+        write_time_scale(dm);
         // 1. Nodes
         std::vector<std::string> nodes_names;
         for(unsigned i=0; i<nb_nodes; ++i) {
@@ -236,7 +247,7 @@ public:
                 while(dest_ind == i) {
                     dest_ind = rand_indice(nodes_names);
                 }
-                dm.push_back(write_random_edge(nodes_names.at(i),nodes_names.at(dest_ind)));
+                write_random_edge(dm,nodes_names.at(i),nodes_names.at(dest_ind));
             }
         }
         // 3. Additional edges for non-reachable nodes
@@ -253,7 +264,7 @@ public:
                 while(orig_ind == i) {
                     orig_ind = rand_indice(nodes_names);
                 }
-                dm.push_back(write_random_edge(nodes_names.at(orig_ind),nodes_names.at(i)));
+                write_random_edge(dm,nodes_names.at(orig_ind),nodes_names.at(i));
             }
         }
         return dm;
@@ -286,10 +297,10 @@ public:
      *
      * @return Return the duration matrix.
      */
-    std::vector<std::vector<std::string>> build_random_connected_symmetric_directed_duration_matrix() const {
+    std::vector<std::vector<std::string>> build_connected_symmetric_directed_duration_matrix() const {
         std::vector<std::vector<std::string>> dm;
         // 0. time scale
-        dm.push_back(write_time_scale());
+        write_time_scale(dm);
         // 1. Build minimum of edges per node + the come-back edge
         std::vector<std::string> nodes_names;
         for(unsigned i=0; i<nb_nodes; ++i) {
@@ -305,8 +316,8 @@ public:
                 }
                 nodes_edges_counter.at(i)++;
                 nodes_edges_counter.at(dest_ind)++;
-                dm.push_back(write_random_edge(nodes_names.at(i),nodes_names.at(dest_ind)));
-                dm.push_back(write_random_edge(nodes_names.at(dest_ind),nodes_names.at(i)));
+                write_random_edge(dm,nodes_names.at(i),nodes_names.at(dest_ind));
+                write_random_edge(dm,nodes_names.at(dest_ind),nodes_names.at(i));
             }
         }
         return dm;
@@ -317,32 +328,52 @@ public:
      *
      * A sequential duration matrix is a matrix with several sequences of nodes linking
      * the start to the goal.
-     * Sometimes some nodes of a sequence allow to jump to another link.
+     * This can be seen as multiple paths composed with a certain amount of nodes linking
+     * the starting to the goal nodes.
+     * The same amount of nodes is used for all the paths.
+     * Additionally, each node of each path is linked to the nodes of all the other paths
+     * with the same depth.
+     * Depth here refers to the number of nodes between the starting node and the considered
+     * node.
+     * @note The names of the nodes are n<i>_<j> with i the path's number and j the depth.
+     * Each indices start from 0.
      * @return Return the duration matrix.
      */
     std::vector<std::vector<std::string>> build_sequential_duration_matrix() const {
-        //TODO set those parameters in the parameters file
-        unsigned nb_links = 3;
-        unsigned nb_nodes_per_link = 5;
-
         std::vector<std::vector<std::string>> dm;
         // 0. time scale
-        dm.push_back(write_time_scale());
-        // 1. Create nodes
+        write_time_scale(dm);
+        // 1. Create paths between starting and goal nodes
         for(unsigned i=0; i<nb_links; ++i) {
-            for(unsigned j=0; i<nb_nodes_per_link; ++i) {
-                std::string dest_name = "n" + std::to_string(i) + "_" + std::to_string(j);
-                if(j == 0) {
-                    std::string orig_name = "n0";
-                    dm.push_back(write_random_edge(orig_name,dest_name));
-                } else {
-                    std::string orig_name = "n" + std::to_string(i) + "_" + std::to_string(j-1);
-                    dm.push_back(write_random_edge(orig_name,dest_name));
+            for(unsigned j=0; j<nb_nodes_per_link-1; ++j) {
+                std::string orig_name = "n" + std::to_string(i) + "_" + std::to_string(j);
+                std::string dest_name = "n" + std::to_string(i) + "_" + std::to_string(j+1);
+                write_random_edge(dm,orig_name,dest_name);
+                write_random_edge(dm,dest_name,orig_name);
+            }
+        }
+        // 2. Link starting and goal nodes to the paths
+        for(unsigned i=0; i<nb_links; ++i) {
+            std::string dest_name = "n" + std::to_string(i) + "_0";
+            write_random_edge(dm,initial_location,dest_name);
+            write_random_edge(dm,dest_name,initial_location);
+        }
+        for(unsigned i=0; i<nb_links; ++i) {
+            std::string orig_name = "n" + std::to_string(i) + "_" + std::to_string(nb_nodes_per_link - 1);
+            write_random_edge(dm,orig_name,terminal_location);
+        }
+        // 3. Create connexions between paths
+        for(unsigned i=0; i<nb_links; ++i) {
+            for(unsigned j=0; j<nb_nodes_per_link; ++j) {
+                std::string orig_name = "n" + std::to_string(i) + "_" + std::to_string(j);
+                for(unsigned k=0; k<nb_links; ++k) {
+                    if(k != i) {
+                        std::string dest_name = "n" + std::to_string(k) + "_" + std::to_string(j);
+                        write_random_edge(dm,orig_name,dest_name);
+                    }
                 }
             }
         }
-        // 2. Create trans-connexions
-        //TODO
         return dm;
     }
 
