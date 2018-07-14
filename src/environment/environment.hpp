@@ -100,11 +100,11 @@ public:
     /**
      * @brief Reward function
      */
-    double reward_function(const state &st, double duration) const {
+    double reward_function(const state &st) const {
         if(is_state_terminal(st)) {
             return reward_from_duration(st.t) + get_terminal_reward(st);
         } else {
-            return 0;//reward_from_duration(duration);
+            return 0;
         }
     }
 
@@ -173,7 +173,7 @@ public:
                 s.t + duration,
                 s.get_ptr_to_successor(indice)
             );
-            r = reward_function(s_p,duration);
+            r = reward_function(s_p);
         } else { // Illegal action
             throw illegal_action_exception();
         }
