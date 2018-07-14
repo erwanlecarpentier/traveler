@@ -76,9 +76,9 @@ int main(int argc, char ** argv) {
         std::clock_t c_start = std::clock();
         srand(time(NULL));
         if(argc > 1) {
-            single_run(argv[1]);
+            //single_run(argv[1]);
             //generate_maps(argv[1],1);
-            //sequential_policies(argv[1],run);
+            sequential_policies(argv[1],run);
             //parallel_policies(argv[1],run);
         } else {
             throw no_parameters_path_exception();
