@@ -34,6 +34,8 @@ for i in range(1,max_number_of_edges+1):
 	h += plt.plot(cfloat, label=lab)
 
 plt.legend(handles=h)
+plt.xlabel('Time')
+plt.ylabel('Duration')
 
 plt.show()
 
